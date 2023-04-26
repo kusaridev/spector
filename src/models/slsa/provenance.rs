@@ -3,6 +3,7 @@ use serde::de;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use url::Url;
+use chrono::{DateTime, Utc};
 
 const SLSA_PROVENANCE_URI: &str = "https://slsa.dev/provenance/v1";
 const IN_TOTO_STATEMENT_URI: &str = "https://in-toto.io/Statement/v1";
@@ -101,9 +102,9 @@ pub struct Metadata {
     #[serde(rename = "invocationId")]
     pub invocation_id: String,
     #[serde(rename = "startedOn")]
-    pub started_on: String,
+    pub started_on: DateTime<Utc>,
     #[serde(rename = "finishedOn")]
-    pub finished_on: Option<String>,
+    pub finished_on: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
