@@ -1,0 +1,48 @@
+{
+    "_type": "https://in-toto.io/Statement/v1",
+    "predicateType": "https://slsa.dev/provenance/v1",
+    "predicate": {
+        "buildDefinition": {
+            "externalParameters": {
+                "inputs": {
+                    "build_id": 123456768,
+                    "deploy_target": "deployment_sys_1a",
+                    "perform_deploy": "true"
+                },
+                "vars": {
+                    "MASCOT": "Mona"
+                },
+                "workflow": {
+                    "ref": "refs/heads/main",
+                    "repository": "https://github.com/octocat/hello-world",
+                    "path": ".github/workflow/release.yml"
+                }
+            },
+            "internalParameters": {
+                "github": {
+                    "actor_id": "1234567",
+                    "event_name": "workflow_dispatch"
+                }
+            },
+            "resolvedDependencies": [
+                {
+                    "uri": "git+https://github.com/octocat/hello-world@refs/heads/main",
+                    "digest": {
+                        "gitCommit": "c27d339ee6075c1f744c5d4b200f7901aad2c369"
+                    }
+                 },
+                {
+                    "uri": "https://github.com/actions/virtual-environments/releases/tag/ubuntu20/20220515.1"
+                }
+            ]
+        }
+    },
+    "subject": [
+        {
+            "name": "_",
+            "digest": {
+                "sha256": "fe4fe40ac7250263c5dbe1cf3138912f3f416140aa248637a60d65fe22c47da4"
+            }
+        }
+    ]
+}
