@@ -1,7 +1,16 @@
+//! Custom (de)serialization functions for optional base64-encoded byte arrays.
+//!
+//! This module provides custom serialization and deserialization functions for
+//! handling `Option<Vec<u8>>` types that are base64-encoded.
+
 use base64::{engine::general_purpose, Engine};
 use serde::{Deserialize, Deserializer, Serializer};
 
-#[allow(dead_code)]
+/// Serializes an optional `Vec<u8>` as a base64-encoded string.
+///
+/// If the input is `Some(Vec<u8>)`, it will be base64-encoded and serialized as a string.
+/// If the input is `None`, it will be serialized as a JSON `null`.
+/// If the input is invalid base64, an error will be returned.
 pub fn serialize<S>(bytes: &Option<Vec<u8>>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -12,7 +21,10 @@ where
     }
 }
 
-#[allow(dead_code)]
+/// Deserializes a base64-encoded string into an optional `Vec<u8>`.
+///
+/// If the input is a JSON `null`, it will be deserialized as `None`.
+/// If the input is a base64-encoded string, it will be deserialized into a `Some(Vec<u8>)`.
 pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<Vec<u8>>, D::Error>
 where
     D: Deserializer<'de>,

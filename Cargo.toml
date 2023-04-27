@@ -7,8 +7,23 @@ repository = "https://github.com/kusaridev/spector"
 license = "Apache-2.0"
 
 [dependencies]
+anyhow = "1.0.70"
 base64 = "0.21"
 chrono = { version = "0.4.24", features = ["serde"] }
+clap = { version = "4.2.4", features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 url = "2.2"
+
+[dev-dependencies]
+maplit = "1.0.2"
+assert_cmd = "1.0"
+predicates = "2.1"
+
+[lib]
+name = "spector"
+path = "src/lib.rs"
+
+[[bin]]
+name = "spector"
+path = "src/bin/bin.rs"
