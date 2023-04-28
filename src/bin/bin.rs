@@ -5,7 +5,7 @@
 
 use std::process;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
 use clap::Parser;
 use spector::models::intoto::{predicate::Predicate, statement::InTotoStatementV1};
 
@@ -64,14 +64,14 @@ struct SLSAProvenanceV1 {
 }
 
 /// Validates the specified document.
-fn validate_cmd(validate: Validate) -> Result<(), Box<dyn std::error::Error>> {
+fn validate_cmd(validate: Validate) -> Result<()> {
     match validate.document {
         DocumentSubCommand::InTotoV1(in_toto) => handle_intoto_v1(in_toto),
     }
 }
 
 /// Handles In-Toto v1 documents.
-fn handle_intoto_v1(in_toto: InTotoV1) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_intoto_v1(in_toto: InTotoV1) -> Result<()> {
     match in_toto.predicate_subcommand {
         PredicateSubcommand::SLSAProvenanceV1(sl) => handle_slsa_provenance_v1(sl),
     }
@@ -81,7 +81,7 @@ fn handle_intoto_v1(in_toto: InTotoV1) -> Result<(), Box<dyn std::error::Error>>
 ///
 /// Prints the document if valid, otherwise prints an error message
 /// with the unexpected predicate type or JSON parsing error.
-fn handle_slsa_provenance_v1(sl: SLSAProvenanceV1) -> Result<(), Box<dyn std::error::Error>> {
+fn handle_slsa_provenance_v1(sl: SLSAProvenanceV1) -> Result<()> {
     let json_str = std::fs::read_to_string(sl.file)?;
     let result = serde_json::from_str::<InTotoStatementV1>(&json_str);
 
@@ -106,7 +106,7 @@ fn handle_slsa_provenance_v1(sl: SLSAProvenanceV1) -> Result<(), Box<dyn std::er
             // TODO(mlieberman85): Figure out how to add all the fields that are incorrect between a valid SLSA statement and the one that is being validated.
             // Right now it only prints the first error.
             eprintln!("Error parsing JSON: {}", err);
-            Err(Box::new(err))
+            Err(err.into())
         }
     }
 }
