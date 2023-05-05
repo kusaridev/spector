@@ -17,7 +17,6 @@ fn test_valid_slsa_provenance_v1_document() {
     cmd.args(&[
         "validate",
         "in-toto-v1",
-        "slsa-provenance-v1",
         "--file",
         fixture.to_str().unwrap(),
     ])
@@ -36,7 +35,6 @@ fn test_invalid_slsa_provenance_v1_document() {
     cmd.args(&[
         "validate",
         "in-toto-v1",
-        "slsa-provenance-v1",
         "--file",
         fixture.to_str().unwrap(),
     ])
@@ -55,6 +53,7 @@ fn test_invalid_predicate_slsa_provenance_v1_document() {
     cmd.args(&[
         "validate",
         "in-toto-v1",
+        "--predicate",
         "slsa-provenance-v1",
         "--file",
         fixture.to_str().unwrap(),
@@ -64,4 +63,37 @@ fn test_invalid_predicate_slsa_provenance_v1_document() {
     .stderr(predicate::str::contains(
         "Unexpected predicateType: \"https://slsa.dev/provenance/v12\"",
     ));
+}
+
+#[test]
+fn test_generate_in_toto_v1_schema() {
+    let mut cmd = Command::cargo_bin("spector").unwrap();
+    let fixture = std::fs::read_to_string(fixture_path("in_toto_v1_schema.json")).unwrap();
+
+    cmd.args(&["schema-generate", "in-toto-v1"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(fixture));
+}
+
+#[test]
+fn test_generate_slsa_provenance_v1_schema() {
+    let mut cmd = Command::cargo_bin("spector").unwrap();
+    let fixture = std::fs::read_to_string(fixture_path("slsa_provenance_v1_schema.json")).unwrap();
+
+    cmd.args(&["schema-generate", "in-toto-v1", "--predicate", "slsa-provenance-v1"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(fixture));
+}
+
+#[test]
+fn test_generate_rust_code() {
+    let mut cmd = Command::cargo_bin("spector").unwrap();
+    let fixture = std::fs::read_to_string(fixture_path("in_toto_v1.rs")).unwrap();
+
+    cmd.args(&["code-generate", "json-schema", "--file", "tests/fixtures/in_toto_v1_schema.json"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(fixture));
 }

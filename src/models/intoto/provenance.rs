@@ -5,12 +5,13 @@
 
 use crate::models::helpers::{b64_option_serde, url_serde};
 use chrono::{DateTime, Utc};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use url::Url;
 
 /// A structure representing the SLSA Provenance v1 Predicate.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct SLSAProvenanceV1Predicate {
     #[serde(rename = "buildDefinition")]
     pub build_definition: BuildDefinition,
@@ -19,9 +20,10 @@ pub struct SLSAProvenanceV1Predicate {
 }
 
 /// A structure representing the build definition of the SLSA Provenance v1 Predicate.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct BuildDefinition {
     #[serde(rename = "buildType", with = "url_serde")]
+    #[schemars(with = "Url")]
     pub build_type: Url,
     #[serde(rename = "externalParameters")]
     pub external_parameters: serde_json::Value,
@@ -32,26 +34,31 @@ pub struct BuildDefinition {
 }
 
 /// A structure representing the run details of the SLSA Provenance v1 Predicate.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct RunDetails {
     pub builder: Builder,
     pub metadata: Metadata,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub byproducts: Option<Vec<ResourceDescriptor>>,
 }
 
 /// A structure representing the builder information of the SLSA Provenance v1 Predicate.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct Builder {
     #[serde(with = "url_serde")]
+    #[schemars(with = "Url")]
     pub id: Url,
-    #[serde(rename = "builderDependencies", default)]
+    #[serde(
+        rename = "builderDependencies",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
     pub builder_dependencies: Option<Vec<ResourceDescriptor>>,
     pub version: Option<String>,
 }
 
 /// A structure representing the metadata of the SLSA Provenance v1 Predicate.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct Metadata {
     #[serde(rename = "invocationId")]
     pub invocation_id: String,
@@ -62,19 +69,33 @@ pub struct Metadata {
 }
 
 /// A structure representing a resource descriptor in the SLSA Provenance v1 Predicate.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct ResourceDescriptor {
     #[serde(with = "url_serde")]
+    #[schemars(with = "Url")]
     pub uri: Url,
     pub digest: Option<HashMap<String, String>>,
     pub name: Option<String>,
-    #[serde(rename = "downloadLocation", with = "url_serde", default)]
+    #[serde(
+        rename = "downloadLocation",
+        with = "url_serde",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    #[schemars(with = "Url")]
     pub download_location: Option<Url>,
     #[serde(rename = "mediaType")]
     pub media_type: Option<String>,
     // TODO(mlieberman85): Fix below. Serde was erroring without the default attribute.
     // I think we can probably use a crate with base64 decoding already built in.
-    #[serde(with = "b64_option_serde", default)]
+    #[serde(
+        with = "b64_option_serde",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    // TODO(mlieberman85): Use a base64 type when this issue is resolved:
+    // https://github.com/GREsau/schemars/issues/160
+    #[schemars(with = "String")]
     pub content: Option<Vec<u8>>,
     pub annotations: Option<serde_json::Value>,
 }
