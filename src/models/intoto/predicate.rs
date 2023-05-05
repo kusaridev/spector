@@ -5,6 +5,7 @@
 //! and generic `Other` variants.
 
 use super::provenance::SLSAProvenanceV1Predicate;
+use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
 
@@ -12,7 +13,11 @@ use serde_json::Value;
 ///
 /// Known predicate types have their own variants, while unknown types are represented
 /// by the `Other` variant, which stores the raw JSON value.
-#[derive(Debug, Serialize, PartialEq)]
+///
+/// TODO(mlieberman85): Support (de)serializing the predicates based on the
+/// predicateType URL in the statement.
+#[derive(Debug, Serialize, PartialEq, JsonSchema)]
+#[serde(untagged)]
 pub enum Predicate {
     SLSAProvenanceV1(SLSAProvenanceV1Predicate),
     Other(Value),

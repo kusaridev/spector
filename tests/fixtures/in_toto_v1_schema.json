@@ -1,0 +1,224 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InTotoStatementV1",
+  "description": "Represents an In-Toto v1 statement.",
+  "type": "object",
+  "required": [
+    "_type",
+    "predicate",
+    "predicateType",
+    "subject"
+  ],
+  "properties": {
+    "_type": {
+      "type": "string",
+      "format": "uri"
+    },
+    "predicate": {
+      "$ref": "#/definitions/Predicate"
+    },
+    "predicateType": {
+      "type": "string",
+      "format": "uri"
+    },
+    "subject": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Subject"
+      }
+    }
+  },
+  "definitions": {
+    "BuildDefinition": {
+      "description": "A structure representing the build definition of the SLSA Provenance v1 Predicate.",
+      "type": "object",
+      "required": [
+        "buildType",
+        "externalParameters",
+        "internalParameters",
+        "resolvedDependencies"
+      ],
+      "properties": {
+        "buildType": {
+          "type": "string",
+          "format": "uri"
+        },
+        "externalParameters": true,
+        "internalParameters": true,
+        "resolvedDependencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResourceDescriptor"
+          }
+        }
+      }
+    },
+    "Builder": {
+      "description": "A structure representing the builder information of the SLSA Provenance v1 Predicate.",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "builderDependencies": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ResourceDescriptor"
+          }
+        },
+        "id": {
+          "type": "string",
+          "format": "uri"
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "DigestSet": {
+      "description": "Represents a set of digests, mapping algorithms to their respective digest strings.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "Metadata": {
+      "description": "A structure representing the metadata of the SLSA Provenance v1 Predicate.",
+      "type": "object",
+      "required": [
+        "invocationId",
+        "startedOn"
+      ],
+      "properties": {
+        "finishedOn": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "invocationId": {
+          "type": "string"
+        },
+        "startedOn": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Predicate": {
+      "description": "An enum representing different predicate types.\n\nKnown predicate types have their own variants, while unknown types are represented by the `Other` variant, which stores the raw JSON value.\n\nTODO(mlieberman85): Support (de)serializing the predicates based on the predicateType URL in the statement.",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SLSAProvenanceV1Predicate"
+        },
+        true
+      ]
+    },
+    "ResourceDescriptor": {
+      "description": "A structure representing a resource descriptor in the SLSA Provenance v1 Predicate.",
+      "type": "object",
+      "required": [
+        "uri"
+      ],
+      "properties": {
+        "annotations": true,
+        "content": {
+          "type": "string"
+        },
+        "digest": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "downloadLocation": {
+          "type": "string",
+          "format": "uri"
+        },
+        "mediaType": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "RunDetails": {
+      "description": "A structure representing the run details of the SLSA Provenance v1 Predicate.",
+      "type": "object",
+      "required": [
+        "builder",
+        "metadata"
+      ],
+      "properties": {
+        "builder": {
+          "$ref": "#/definitions/Builder"
+        },
+        "byproducts": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ResourceDescriptor"
+          }
+        },
+        "metadata": {
+          "$ref": "#/definitions/Metadata"
+        }
+      }
+    },
+    "SLSAProvenanceV1Predicate": {
+      "description": "A structure representing the SLSA Provenance v1 Predicate.",
+      "type": "object",
+      "required": [
+        "buildDefinition",
+        "runDetails"
+      ],
+      "properties": {
+        "buildDefinition": {
+          "$ref": "#/definitions/BuildDefinition"
+        },
+        "runDetails": {
+          "$ref": "#/definitions/RunDetails"
+        }
+      }
+    },
+    "Subject": {
+      "description": "Represents a subject in an In-Toto v1 statement.",
+      "type": "object",
+      "required": [
+        "digest",
+        "name"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "#/definitions/DigestSet"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -4,28 +4,35 @@
 //! subjects, algorithms, and digest sets. It also includes custom (de)serialization
 //! code for handling In-Toto v1 statements.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
-use url::Url;
 use std::collections::HashMap;
+use url::Url;
 
-use crate::models::{intoto::predicate::{deserialize_predicate, Predicate}, helpers::url_serde};
+use crate::models::{
+    helpers::url_serde,
+    intoto::predicate::{deserialize_predicate, Predicate},
+};
 
 /// Represents an In-Toto v1 statement.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, JsonSchema)]
 pub struct InTotoStatementV1 {
     #[serde(rename = "_type", with = "url_serde")]
+    #[schemars(with = "Url")]
     pub _type: Url,
     pub subject: Vec<Subject>,
     #[serde(rename = "predicateType", with = "url_serde")]
+    #[schemars(with = "Url")]
     pub predicate_type: Url,
     pub predicate: Predicate,
 }
 
 /// Enum for the supported hashing algorithms.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum Algorithm {
+    // TODO(mlieberman85): Add validation for the length/encoding of the digest string.
     Sha224,
     Sha256,
     Sha384,
@@ -48,11 +55,11 @@ pub enum Algorithm {
 }
 
 /// Represents a set of digests, mapping algorithms to their respective digest strings.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct DigestSet(HashMap<Algorithm, String>);
 
 /// Represents a subject in an In-Toto v1 statement.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct Subject {
     pub name: String,
     pub digest: DigestSet,
@@ -112,7 +119,10 @@ mod tests {
 
         let statement: InTotoStatementV1 = serde_json::from_str(json_data).unwrap();
         assert_eq!(statement._type.as_str(), "https://in-toto.io/Statement/v1");
-        assert_eq!(statement.predicate_type.as_str(), "https://random.type/predicate/v1");
+        assert_eq!(
+            statement.predicate_type.as_str(),
+            "https://random.type/predicate/v1"
+        );
         assert_eq!(statement.subject[0].name, "example");
     }
 
