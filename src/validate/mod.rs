@@ -72,6 +72,28 @@ impl<T: DeserializeOwned> Validator for JSONSchemaValidator<T> {
     }
 }
 
+pub struct GenericValidator<T: DeserializeOwned> {
+    _phantom: std::marker::PhantomData<T>,
+}
+
+impl<T: DeserializeOwned> Validator for GenericValidator<T> {
+    type Output = T;
+
+    fn validate(&self, value: &Value) -> Result<Self::Output> {
+        let deserialized_value = from_value(value.clone())
+            .map_err(|e| anyhow!("Failed to deserialize value into type: {}", e))?;
+        Ok(deserialized_value)
+    }
+}
+
+impl<T: DeserializeOwned> GenericValidator<T> {
+    pub fn new() -> Self {
+        Self {
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use serde::{Deserialize, Serialize};
@@ -97,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn test_valid_person() {
+    fn test_jsonschema_valid_person() {
         let schema = person_schema();
         let validator = JSONSchemaValidator::<Person>::new(&schema);
 
@@ -117,7 +139,7 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_person() {
+    fn test_jsonschema_invalid_person() {
         let schema = person_schema();
         let validator = JSONSchemaValidator::<Person>::new(&schema);
 
@@ -127,5 +149,32 @@ mod tests {
         });
 
         assert!(validator.validate(&invalid_value).is_err());
+    }
+
+    #[test]
+    fn test_generic_person_validation() {
+        let validator = GenericValidator::<Person>::new();
+        let json_value = json!({
+            "name": "John Doe",
+            "age": 30
+        });
+        let expected = Person {
+            name: String::from("John Doe"),
+            age: 30
+        };
+        let result = validator.validate(&json_value).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_generic_json_value_validation() {
+        let validator = GenericValidator::<Value>::new();
+        let json_value = json!({
+            "key": "value",
+            "number": 123
+        });
+        let expected = json_value.clone();
+        let result = validator.validate(&json_value).unwrap();
+        assert_eq!(result, expected);
     }
 }
