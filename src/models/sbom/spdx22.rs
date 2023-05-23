@@ -3,7 +3,7 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 use serde::{Deserialize, Serialize};
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22 {
     #[serde(rename = "Document", default, skip_serializing_if = "Option::is_none")]
     pub document: Option<Spdx22Document>,
@@ -18,7 +18,7 @@ impl Spdx22 {
         builder::Spdx22::default()
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22Document {
     ///Provide additional information about an SpdxElement.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -84,7 +84,7 @@ impl Spdx22Document {
     }
 }
 ///An Annotation is a comment on an SpdxItem by an agent.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentAnnotationsItem {
     ///Identify when the comment was made. This is to be specified according to the combined date and time in the UTC format, as specified in the ISO 8601 standard.
     #[serde(rename = "annotationDate", default, skip_serializing_if = "Option::is_none")]
@@ -119,7 +119,8 @@ impl Spdx22DocumentAnnotationsItem {
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentAnnotationsItemAnnotationType {
     #[serde(rename = "OTHER")]
@@ -170,7 +171,7 @@ impl std::convert::TryFrom<String> for Spdx22DocumentAnnotationsItemAnnotationTy
     }
 }
 ///One instance is required for each SPDX file produced. It provides the necessary information for forward and backward compatibility for processing tools.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentCreationInfo {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -199,7 +200,7 @@ impl Spdx22DocumentCreationInfo {
     }
 }
 ///Information about an external SPDX document reference including the checksum. This allows for verification of the external references.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentExternalDocumentRefsItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub checksum: Option<Spdx22DocumentExternalDocumentRefsItemChecksum>,
@@ -226,7 +227,7 @@ impl Spdx22DocumentExternalDocumentRefsItem {
     }
 }
 ///A Checksum is value that allows the contents of a file to be authenticated. Even small changes to the content of the file will change its checksum. This class allows the results of a variety of checksum and cryptographic message digest algorithms to be represented.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentExternalDocumentRefsItemChecksum {
     ///Identifies the algorithm used to produce the subject Checksum. Currently, SHA-1 is the only supported algorithm. It is anticipated that other algorithms will be supported at a later time.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -257,7 +258,8 @@ impl Spdx22DocumentExternalDocumentRefsItemChecksum {
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentExternalDocumentRefsItemChecksumAlgorithm {
     #[serde(rename = "SHA256")]
@@ -338,7 +340,7 @@ for Spdx22DocumentExternalDocumentRefsItemChecksumAlgorithm {
         value.parse()
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentFilesItem {
     ///Provide additional information about an SpdxElement.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -407,7 +409,7 @@ impl Spdx22DocumentFilesItem {
     }
 }
 ///An Annotation is a comment on an SpdxItem by an agent.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentFilesItemAnnotationsItem {
     ///Identify when the comment was made. This is to be specified according to the combined date and time in the UTC format, as specified in the ISO 8601 standard.
     #[serde(rename = "annotationDate", default, skip_serializing_if = "Option::is_none")]
@@ -443,7 +445,8 @@ impl Spdx22DocumentFilesItemAnnotationsItem {
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentFilesItemAnnotationsItemAnnotationType {
     #[serde(rename = "OTHER")]
@@ -497,7 +500,7 @@ for Spdx22DocumentFilesItemAnnotationsItemAnnotationType {
     }
 }
 ///A Checksum is value that allows the contents of a file to be authenticated. Even small changes to the content of the file will change its checksum. This class allows the results of a variety of checksum and cryptographic message digest algorithms to be represented.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentFilesItemChecksumsItem {
     ///Identifies the algorithm used to produce the subject Checksum. Currently, SHA-1 is the only supported algorithm. It is anticipated that other algorithms will be supported at a later time.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -528,7 +531,8 @@ impl Spdx22DocumentFilesItemChecksumsItem {
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentFilesItemChecksumsItemAlgorithm {
     #[serde(rename = "SHA256")]
@@ -617,7 +621,8 @@ impl std::convert::TryFrom<String> for Spdx22DocumentFilesItemChecksumsItemAlgor
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentFilesItemFileTypesItem {
     #[serde(rename = "OTHER")]
@@ -704,7 +709,7 @@ impl std::convert::TryFrom<String> for Spdx22DocumentFilesItemFileTypesItem {
     }
 }
 ///An ExtractedLicensingInfo represents a license or licensing notice that was found in the package. Any license text that is recognized as a license may be represented as a License rather than an ExtractedLicensingInfo.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentHasExtractedLicensingInfosItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -731,7 +736,7 @@ impl Spdx22DocumentHasExtractedLicensingInfosItem {
         builder::Spdx22DocumentHasExtractedLicensingInfosItem::default()
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentPackagesItem {
     ///Provide additional information about an SpdxElement.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -827,7 +832,7 @@ impl Spdx22DocumentPackagesItem {
     }
 }
 ///An Annotation is a comment on an SpdxItem by an agent.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentPackagesItemAnnotationsItem {
     ///Identify when the comment was made. This is to be specified according to the combined date and time in the UTC format, as specified in the ISO 8601 standard.
     #[serde(rename = "annotationDate", default, skip_serializing_if = "Option::is_none")]
@@ -863,7 +868,8 @@ impl Spdx22DocumentPackagesItemAnnotationsItem {
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentPackagesItemAnnotationsItemAnnotationType {
     #[serde(rename = "OTHER")]
@@ -917,7 +923,7 @@ for Spdx22DocumentPackagesItemAnnotationsItemAnnotationType {
     }
 }
 ///A Checksum is value that allows the contents of a file to be authenticated. Even small changes to the content of the file will change its checksum. This class allows the results of a variety of checksum and cryptographic message digest algorithms to be represented.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentPackagesItemChecksumsItem {
     ///Identifies the algorithm used to produce the subject Checksum. Currently, SHA-1 is the only supported algorithm. It is anticipated that other algorithms will be supported at a later time.
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -948,7 +954,8 @@ impl Spdx22DocumentPackagesItemChecksumsItem {
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentPackagesItemChecksumsItemAlgorithm {
     #[serde(rename = "SHA256")]
@@ -1028,7 +1035,7 @@ impl std::convert::TryFrom<String> for Spdx22DocumentPackagesItemChecksumsItemAl
     }
 }
 ///An External Reference allows a Package to reference an external source of additional information, metadata, enumerations, asset identifiers, or downloadable content believed to be relevant to the Package.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentPackagesItemExternalRefsItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -1074,7 +1081,8 @@ impl Spdx22DocumentPackagesItemExternalRefsItem {
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentPackagesItemExternalRefsItemReferenceCategory {
     #[serde(rename = "OTHER")]
@@ -1134,7 +1142,7 @@ for Spdx22DocumentPackagesItemExternalRefsItemReferenceCategory {
     }
 }
 ///A manifest based verification code (the algorithm is defined in section 4.7 of the full specification) of the SPDX Item. This allows consumers of this data and/or database to determine if an SPDX item they have in hand is identical to the SPDX item from which the data was produced. This algorithm works even if the SPDX document is included in the SPDX item.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentPackagesItemPackageVerificationCode {
     ///A file that was excluded when calculating the package verification code. This is usually a file containing SPDX data regarding the package. If a package contains more than one SPDX file all SPDX files must be excluded from the package verification code. If this is not done it would be impossible to correctly calculate the verification codes in both files.
     #[serde(
@@ -1162,7 +1170,7 @@ impl Spdx22DocumentPackagesItemPackageVerificationCode {
         builder::Spdx22DocumentPackagesItemPackageVerificationCode::default()
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentRelationshipsItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -1202,7 +1210,8 @@ impl Spdx22DocumentRelationshipsItem {
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentRelationshipsItemRelationshipType {
     #[serde(rename = "VARIANT_OF")]
@@ -1412,7 +1421,7 @@ impl std::convert::TryFrom<String> for Spdx22DocumentRelationshipsItemRelationsh
         value.parse()
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentReviewedsItem {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub comment: Option<String>,
@@ -1433,7 +1442,7 @@ impl Spdx22DocumentReviewedsItem {
         builder::Spdx22DocumentReviewedsItem::default()
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentSnippetsItem {
     ///Provide additional information about an SpdxElement.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -1492,7 +1501,7 @@ impl Spdx22DocumentSnippetsItem {
     }
 }
 ///An Annotation is a comment on an SpdxItem by an agent.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentSnippetsItemAnnotationsItem {
     ///Identify when the comment was made. This is to be specified according to the combined date and time in the UTC format, as specified in the ISO 8601 standard.
     #[serde(rename = "annotationDate", default, skip_serializing_if = "Option::is_none")]
@@ -1528,7 +1537,8 @@ impl Spdx22DocumentSnippetsItemAnnotationsItem {
     Ord,
     PartialEq,
     PartialOrd,
-    Serialize
+    Serialize,
+    schemars::JsonSchema
 )]
 pub enum Spdx22DocumentSnippetsItemAnnotationsItemAnnotationType {
     #[serde(rename = "OTHER")]
@@ -1581,7 +1591,7 @@ for Spdx22DocumentSnippetsItemAnnotationsItemAnnotationType {
         value.parse()
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentSnippetsItemRangesItem {
     #[serde(rename = "endPointer", default, skip_serializing_if = "Option::is_none")]
     pub end_pointer: Option<Spdx22DocumentSnippetsItemRangesItemEndPointer>,
@@ -1599,7 +1609,7 @@ impl Spdx22DocumentSnippetsItemRangesItem {
         builder::Spdx22DocumentSnippetsItemRangesItem::default()
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentSnippetsItemRangesItemEndPointer {
     ///SPDX ID for File
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -1616,7 +1626,7 @@ impl Spdx22DocumentSnippetsItemRangesItemEndPointer {
         builder::Spdx22DocumentSnippetsItemRangesItemEndPointer::default()
     }
 }
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Spdx22DocumentSnippetsItemRangesItemStartPointer {
     ///SPDX ID for File
     #[serde(default, skip_serializing_if = "Option::is_none")]
