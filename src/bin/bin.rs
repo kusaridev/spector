@@ -11,10 +11,14 @@ use clap::{Parser, ValueEnum};
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 use spector::{
-    models::{intoto::{
-        predicate::Predicate, provenance::SLSAProvenanceV1Predicate, statement::InTotoStatementV1,
-    }, sbom::{spdx23::Spdx23, spdx22::Spdx22Document}},
-    validate::{self, Validator, GenericValidator},
+    models::{
+        intoto::{
+            predicate::Predicate, provenance::SLSAProvenanceV1Predicate,
+            statement::InTotoStatementV1,
+        },
+        sbom::{spdx22::Spdx22Document, spdx23::Spdx23},
+    },
+    validate::{self, GenericValidator, Validator},
 };
 use typify::{TypeSpace, TypeSpaceSettings};
 
@@ -269,7 +273,12 @@ fn code_generate_cmd(cg: CodeGenerate) -> Result<()> {
 /// Generates Rust code from a JSON schema.
 fn generate_rust_code(schema_str: String) -> Result<()> {
     let schema = serde_json::from_str::<schemars::schema::RootSchema>(&schema_str)?;
-    let mut type_space = TypeSpace::new(TypeSpaceSettings::default().with_struct_builder(true));
+    let mut type_space = TypeSpace::new(
+        TypeSpaceSettings::default()
+            // NOTE: Below allows us to also make the code be able to generate JSON schemas back from the Rust code.
+            .with_derive("schemars::JsonSchema".into())
+            .with_struct_builder(true),
+    );
     type_space.add_root_schema(schema)?;
 
     let contents = format!(
