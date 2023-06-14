@@ -34,17 +34,22 @@
       "type": "object",
       "required": [
         "buildType",
-        "externalParameters",
-        "internalParameters",
-        "resolvedDependencies"
+        "externalParameters"
       ],
       "properties": {
         "buildType": {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "description": "Identifies the template for how to perform the build and interpret the parameters and dependencies.\n\nThe URI SHOULD resolve to a human-readable specification that includes: overall description of the build type; schema for externalParameters and internalParameters; unambiguous instructions for how to initiate the build given this BuildDefinition, and a complete example.\nExample:  https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1"
         },
-        "externalParameters": true,
-        "internalParameters": true,
+        "external_parameters": {
+          "type": "object",
+          "description": "The parameters that are under external control, such as those set by a user or tenant of the build platform. They MUST be complete at SLSA Build L3, meaning that there is no additional mechanism for an external party to influence the build. (At lower SLSA Build levels, the completeness MAY be best effort.)\nThe build platform SHOULD be designed to minimize the size and complexity of externalParameters, in order to reduce fragility and ease verification. Consumers SHOULD have an expectation of what “good” looks like; the more information that they need to check, the harder that task becomes.\nVerifiers SHOULD reject unrecognized or unexpected fields within externalParameters.\n"
+        },
+        "internal_parameters": {
+          "type": "object",
+          "description": "Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.\n"
+        },
         "resolvedDependencies": {
           "type": "array",
           "items": {
@@ -75,7 +80,7 @@
         },
         "version": {
           "type": [
-            "string",
+            "object",
             "null"
           ]
         }
@@ -88,7 +93,7 @@
         "type": "string"
       }
     },
-    "Metadata": {
+    "BuildMetadata": {
       "description": "A structure representing the metadata of the SLSA Provenance v1 Predicate.",
       "type": "object",
       "required": [
@@ -122,15 +127,18 @@
       ]
     },
     "ResourceDescriptor": {
-      "description": "A structure representing a resource descriptor in the SLSA Provenance v1 Predicate.",
+      "description": "A size-efficient description of any software artifact or resource (mutable or immutable)",
       "type": "object",
       "required": [
         "uri"
       ],
       "properties": {
-        "annotations": true,
+        "annotations": {
+          "type": "object"
+        },
         "content": {
-          "type": "string"
+          "type": "string",
+          "format": "byte"
         },
         "digest": {
           "type": [
@@ -172,7 +180,8 @@
       ],
       "properties": {
         "builder": {
-          "$ref": "#/definitions/Builder"
+          "$ref": "#/definitions/Builder",
+          "description": "Identifies the build platform that executed the invocation, which is trusted to have correctly performed the operation and populated this provenance."
         },
         "byproducts": {
           "type": [
@@ -181,10 +190,12 @@
           ],
           "items": {
             "$ref": "#/definitions/ResourceDescriptor"
-          }
+          },
+          "description": "Additional artifacts generated during the build that are not considered the “output” of the build but that might be needed during debugging or incident response. For example, this might reference logs generated during the build and/or a digest of the fully evaluated build configuration.\nIn most cases, this SHOULD NOT contain all intermediate files generated during the build. Instead, this SHOULD only contain files that are likely to be useful later and that cannot be easily reproduced."
         },
         "metadata": {
-          "$ref": "#/definitions/Metadata"
+          "$ref": "#/definitions/BuildMetadata",
+          "description": "Metadata about this particular execution of the build.\n"
         }
       }
     },
