@@ -26,19 +26,25 @@ pub struct BuildDefinition {
     #[schemars(with = "Url")]
     pub build_type: Url,
     #[serde(rename = "externalParameters")]
+    /// The parameters that are under external control, such as those set by a user or tenant of the build platform. They MUST be complete at SLSA Build L3, meaning that there is no additional mechanism for an external party to influence the build. (At lower SLSA Build levels, the completeness MAY be best effort.)\nThe build platform SHOULD be designed to minimize the size and complexity of externalParameters, in order to reduce fragility and ease verification. Consumers SHOULD have an expectation of what “good” looks like; the more information that they need to check, the harder that task becomes.\nVerifiers SHOULD reject unrecognized or unexpected fields within externalParameters.
     pub external_parameters: serde_json::Value,
     #[serde(rename = "internalParameters")]
-    pub internal_parameters: serde_json::Value,
+    /// Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.
+    pub internal_parameters: Option<serde_json::Value>,
     #[serde(rename = "resolvedDependencies")]
-    pub resolved_dependencies: Vec<ResourceDescriptor>,
+    /// Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.
+    pub resolved_dependencies: Option<Vec<ResourceDescriptor>>,
 }
 
 /// A structure representing the run details of the SLSA Provenance v1 Predicate.
 #[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct RunDetails {
+    /// Identifies the build platform that executed the invocation, which is trusted to have correctly performed the operation and populated this provenance.
     pub builder: Builder,
-    pub metadata: Metadata,
+    /// metadata about this particular execution of the build.
+    pub metadata: BuildMetadata,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Additional artifacts generated during the build that are not considered the “output” of the build but that might be needed during debugging or incident response. For example, this might reference logs generated during the build and/or a digest of the fully evaluated build configuration.\nIn most cases, this SHOULD NOT contain all intermediate files generated during the build. Instead, this SHOULD only contain files that are likely to be useful later and that cannot be easily reproduced.
     pub byproducts: Option<Vec<ResourceDescriptor>>,
 }
 
@@ -59,7 +65,7 @@ pub struct Builder {
 
 /// A structure representing the metadata of the SLSA Provenance v1 Predicate.
 #[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
-pub struct Metadata {
+pub struct BuildMetadata {
     #[serde(rename = "invocationId")]
     pub invocation_id: String,
     #[serde(rename = "startedOn")]
@@ -68,7 +74,7 @@ pub struct Metadata {
     pub finished_on: Option<DateTime<Utc>>,
 }
 
-/// A structure representing a resource descriptor in the SLSA Provenance v1 Predicate.
+/// A size-efficient description of any software artifact or resource (mutable or immutable).
 #[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct ResourceDescriptor {
     #[serde(with = "url_serde")]
@@ -138,7 +144,7 @@ mod tests {
                     }]),
                     version: Some("1.0.0".to_string()),
                 },
-                metadata: Metadata {
+                metadata: BuildMetadata {
                     invocation_id: "invocation1".to_string(),
                     started_on: DateTime::parse_from_rfc3339("2023-01-01T12:34:56Z")
                         .unwrap()
