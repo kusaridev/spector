@@ -11,7 +11,7 @@ Spector is still early on and doesn't have an official release yet.
 
 You can run:
 ```shell
-cargo run validate in-toto-v1 slsa-provenance-v1 --file tests/fixtures/slsa_provenance_v1.json
+cargo run validate in-toto-v1 --predicate slsa-provenance-v1 --file tests/fixtures/slsa_provenance_v1.json
 ```
 
 You can replace the `slsa_provenance_v1.json` with another in-toto statement and even an invalid one to verify the correctness of the document. 
