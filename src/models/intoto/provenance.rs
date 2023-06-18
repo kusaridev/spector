@@ -27,10 +27,11 @@ pub struct BuildDefinition {
     pub build_type: Url,
     #[serde(rename = "externalParameters")]
     /// The parameters that are under external control, such as those set by a user or tenant of the build platform. They MUST be complete at SLSA Build L3, meaning that there is no additional mechanism for an external party to influence the build. (At lower SLSA Build levels, the completeness MAY be best effort.)\nThe build platform SHOULD be designed to minimize the size and complexity of externalParameters, in order to reduce fragility and ease verification. Consumers SHOULD have an expectation of what “good” looks like; the more information that they need to check, the harder that task becomes.\nVerifiers SHOULD reject unrecognized or unexpected fields within externalParameters.
-    pub external_parameters: serde_json::Value,
+    pub external_parameters:  serde_json::Map<String, serde_json::Value>,
     #[serde(rename = "internalParameters")]
     /// Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.
-    pub internal_parameters: Option<serde_json::Value>,
+    pub internal_parameters: Option<serde_json::Map<String, serde_json::Value>>,
+
     #[serde(rename = "resolvedDependencies")]
     /// Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.
     pub resolved_dependencies: Option<Vec<ResourceDescriptor>>,
@@ -42,7 +43,7 @@ pub struct RunDetails {
     /// Identifies the build platform that executed the invocation, which is trusted to have correctly performed the operation and populated this provenance.
     pub builder: Builder,
     /// metadata about this particular execution of the build.
-    pub metadata: BuildMetadata,
+    pub metadata: Option<BuildMetadata>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// Additional artifacts generated during the build that are not considered the “output” of the build but that might be needed during debugging or incident response. For example, this might reference logs generated during the build and/or a digest of the fully evaluated build configuration.\nIn most cases, this SHOULD NOT contain all intermediate files generated during the build. Instead, this SHOULD only contain files that are likely to be useful later and that cannot be easily reproduced.
     pub byproducts: Option<Vec<ResourceDescriptor>>,
@@ -67,10 +68,13 @@ pub struct Builder {
 #[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct BuildMetadata {
     #[serde(rename = "invocationId")]
-    pub invocation_id: String,
+    /// Identifies this particular build invocation, which can be useful for finding associated logs or other ad-hoc analysis. The exact meaning and format is defined by builder.id; by default it is treated as opaque and case-sensitive. The value SHOULD be globally unique.
+    pub invocation_id: Option<String>,
     #[serde(rename = "startedOn")]
-    pub started_on: DateTime<Utc>,
+    /// The timestamp of when the build started.
+    pub started_on: Option<DateTime<Utc>>,
     #[serde(rename = "finishedOn")]
+    /// The timestamp of when the build completed.
     pub finished_on: Option<DateTime<Utc>>,
 }
 
@@ -79,8 +83,11 @@ pub struct BuildMetadata {
 pub struct ResourceDescriptor {
     #[serde(with = "url_serde")]
     #[schemars(with = "Url")]
+    /// A URI used to identify the resource or artifact globally. This field is REQUIRED unless either digest or content is set.
     pub uri: Url,
+    /// A set of cryptographic digests of the contents of the resource or artifact. This field is REQUIRED unless either uri or content is set.
     pub digest: Option<HashMap<String, String>>,
+    /// Machine-readable identifier for distinguishing between descriptors.
     pub name: Option<String>,
     #[serde(
         rename = "downloadLocation",
@@ -89,8 +96,10 @@ pub struct ResourceDescriptor {
         skip_serializing_if = "Option::is_none"
     )]
     #[schemars(with = "Url")]
+    /// The location of the described resource or artifact, if different from the uri.
     pub download_location: Option<Url>,
     #[serde(rename = "mediaType")]
+    /// The MIME Type (i.e., media type) of the described resource or artifact.
     pub media_type: Option<String>,
     // TODO(mlieberman85): Fix below. Serde was erroring without the default attribute.
     // I think we can probably use a crate with base64 decoding already built in.
@@ -102,8 +111,10 @@ pub struct ResourceDescriptor {
     // TODO(mlieberman85): Use a base64 type when this issue is resolved:
     // https://github.com/GREsau/schemars/issues/160
     #[schemars(with = "String")]
+    /// The contents of the resource or artifact. This field is REQUIRED unless either uri or digest is set.
     pub content: Option<Vec<u8>>,
-    pub annotations: Option<serde_json::Value>,
+    /// This field MAY be used to provide additional information or metadata about the resource or artifact that may be useful to the consumer when evaluating the attestation against a policy.
+    pub annotations: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 #[cfg(test)]
