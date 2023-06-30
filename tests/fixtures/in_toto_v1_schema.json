@@ -39,22 +39,59 @@
       "properties": {
         "buildType": {
           "type": "string",
-          "format": "uri",
-          "description": "Identifies the template for how to perform the build and interpret the parameters and dependencies.\n\nThe URI SHOULD resolve to a human-readable specification that includes: overall description of the build type; schema for externalParameters and internalParameters; unambiguous instructions for how to initiate the build given this BuildDefinition, and a complete example.\nExample:  https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1"
+          "format": "uri"
         },
-        "external_parameters": {
+        "externalParameters": {
+          "description": "The parameters that are under external control, such as those set by a user or tenant of the build platform. They MUST be complete at SLSA Build L3, meaning that there is no additional mechanism for an external party to influence the build. (At lower SLSA Build levels, the completeness MAY be best effort.)\\nThe build platform SHOULD be designed to minimize the size and complexity of externalParameters, in order to reduce fragility and ease verification. Consumers SHOULD have an expectation of what “good” looks like; the more information that they need to check, the harder that task becomes.\\nVerifiers SHOULD reject unrecognized or unexpected fields within externalParameters.",
           "type": "object",
-          "description": "The parameters that are under external control, such as those set by a user or tenant of the build platform. They MUST be complete at SLSA Build L3, meaning that there is no additional mechanism for an external party to influence the build. (At lower SLSA Build levels, the completeness MAY be best effort.)\nThe build platform SHOULD be designed to minimize the size and complexity of externalParameters, in order to reduce fragility and ease verification. Consumers SHOULD have an expectation of what “good” looks like; the more information that they need to check, the harder that task becomes.\nVerifiers SHOULD reject unrecognized or unexpected fields within externalParameters."
+          "additionalProperties": true
         },
-        "internal_parameters": {
-          "type": "object",
-          "description": "Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here."
+        "internalParameters": {
+          "description": "Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
         },
         "resolvedDependencies": {
-          "type": "array",
+          "description": "Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.",
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "$ref": "#/definitions/ResourceDescriptor"
           }
+        }
+      }
+    },
+    "BuildMetadata": {
+      "description": "A structure representing the metadata of the SLSA Provenance v1 Predicate.",
+      "type": "object",
+      "properties": {
+        "finishedOn": {
+          "description": "The timestamp of when the build completed.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "invocationId": {
+          "description": "Identifies this particular build invocation, which can be useful for finding associated logs or other ad-hoc analysis. The exact meaning and format is defined by builder.id; by default it is treated as opaque and case-sensitive. The value SHOULD be globally unique.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "startedOn": {
+          "description": "The timestamp of when the build started.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
         }
       }
     },
@@ -80,7 +117,7 @@
         },
         "version": {
           "type": [
-            "object",
+            "string",
             "null"
           ]
         }
@@ -93,30 +130,6 @@
         "type": "string"
       }
     },
-    "BuildMetadata": {
-      "description": "A structure representing the metadata of the SLSA Provenance v1 Predicate.",
-      "type": "object",
-      "required": [
-        "invocationId",
-        "startedOn"
-      ],
-      "properties": {
-        "finishedOn": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date-time"
-        },
-        "invocationId": {
-          "type": "string"
-        },
-        "startedOn": {
-          "type": "string",
-          "format": "date-time"
-        }
-      }
-    },
     "Predicate": {
       "description": "An enum representing different predicate types.\n\nKnown predicate types have their own variants, while unknown types are represented by the `Other` variant, which stores the raw JSON value.\n\nTODO(mlieberman85): Support (de)serializing the predicates based on the predicateType URL in the statement.",
       "anyOf": [
@@ -127,20 +140,26 @@
       ]
     },
     "ResourceDescriptor": {
-      "description": "A size-efficient description of any software artifact or resource (mutable or immutable)",
+      "description": "A size-efficient description of any software artifact or resource (mutable or immutable).",
       "type": "object",
       "required": [
         "uri"
       ],
       "properties": {
         "annotations": {
-          "type": "object"
+          "description": "This field MAY be used to provide additional information or metadata about the resource or artifact that may be useful to the consumer when evaluating the attestation against a policy.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
         },
         "content": {
-          "type": "string",
-          "format": "byte"
+          "description": "The contents of the resource or artifact. This field is REQUIRED unless either uri or digest is set.",
+          "type": "string"
         },
         "digest": {
+          "description": "A set of cryptographic digests of the contents of the resource or artifact. This field is REQUIRED unless either uri or content is set.",
           "type": [
             "object",
             "null"
@@ -150,22 +169,26 @@
           }
         },
         "downloadLocation": {
+          "description": "The location of the described resource or artifact, if different from the uri.",
           "type": "string",
           "format": "uri"
         },
         "mediaType": {
+          "description": "The MIME Type (i.e., media type) of the described resource or artifact.",
           "type": [
             "string",
             "null"
           ]
         },
         "name": {
+          "description": "Machine-readable identifier for distinguishing between descriptors.",
           "type": [
             "string",
             "null"
           ]
         },
         "uri": {
+          "description": "A URI used to identify the resource or artifact globally. This field is REQUIRED unless either digest or content is set.",
           "type": "string",
           "format": "uri"
         }
@@ -175,27 +198,37 @@
       "description": "A structure representing the run details of the SLSA Provenance v1 Predicate.",
       "type": "object",
       "required": [
-        "builder",
-        "metadata"
+        "builder"
       ],
       "properties": {
         "builder": {
-          "$ref": "#/definitions/Builder",
-          "description": "Identifies the build platform that executed the invocation, which is trusted to have correctly performed the operation and populated this provenance."
+          "description": "Identifies the build platform that executed the invocation, which is trusted to have correctly performed the operation and populated this provenance.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Builder"
+            }
+          ]
         },
         "byproducts": {
+          "description": "Additional artifacts generated during the build that are not considered the “output” of the build but that might be needed during debugging or incident response. For example, this might reference logs generated during the build and/or a digest of the fully evaluated build configuration.\\nIn most cases, this SHOULD NOT contain all intermediate files generated during the build. Instead, this SHOULD only contain files that are likely to be useful later and that cannot be easily reproduced.",
           "type": [
             "array",
             "null"
           ],
           "items": {
             "$ref": "#/definitions/ResourceDescriptor"
-          },
-          "description": "Additional artifacts generated during the build that are not considered the “output” of the build but that might be needed during debugging or incident response. For example, this might reference logs generated during the build and/or a digest of the fully evaluated build configuration.\nIn most cases, this SHOULD NOT contain all intermediate files generated during the build. Instead, this SHOULD only contain files that are likely to be useful later and that cannot be easily reproduced."
+          }
         },
         "metadata": {
-          "$ref": "#/definitions/BuildMetadata",
-          "description": "Metadata about this particular execution of the build."
+          "description": "metadata about this particular execution of the build.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/BuildMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
