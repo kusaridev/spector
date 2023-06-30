@@ -9,11 +9,23 @@ pub struct BuildDefinition {
     #[serde(rename = "buildType")]
     pub build_type: String,
     #[serde(rename = "externalParameters")]
-    pub external_parameters: serde_json::Value,
-    #[serde(rename = "internalParameters")]
-    pub internal_parameters: serde_json::Value,
-    #[serde(rename = "resolvedDependencies")]
-    pub resolved_dependencies: Vec<ResourceDescriptor>,
+    pub external_parameters: std::collections::HashMap<String, serde_json::Value>,
+    ///Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.
+    #[serde(
+        rename = "internalParameters",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub internal_parameters: Option<
+        std::collections::HashMap<String, serde_json::Value>,
+    >,
+    ///Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.
+    #[serde(
+        rename = "resolvedDependencies",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub resolved_dependencies: Option<Vec<ResourceDescriptor>>,
 }
 impl From<&BuildDefinition> for BuildDefinition {
     fn from(value: &BuildDefinition) -> Self {
@@ -23,6 +35,29 @@ impl From<&BuildDefinition> for BuildDefinition {
 impl BuildDefinition {
     pub fn builder() -> builder::BuildDefinition {
         builder::BuildDefinition::default()
+    }
+}
+///A structure representing the metadata of the SLSA Provenance v1 Predicate.
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct BuildMetadata {
+    ///The timestamp of when the build completed.
+    #[serde(rename = "finishedOn", default, skip_serializing_if = "Option::is_none")]
+    pub finished_on: Option<chrono::DateTime<chrono::offset::Utc>>,
+    ///Identifies this particular build invocation, which can be useful for finding associated logs or other ad-hoc analysis. The exact meaning and format is defined by builder.id; by default it is treated as opaque and case-sensitive. The value SHOULD be globally unique.
+    #[serde(rename = "invocationId", default, skip_serializing_if = "Option::is_none")]
+    pub invocation_id: Option<String>,
+    ///The timestamp of when the build started.
+    #[serde(rename = "startedOn", default, skip_serializing_if = "Option::is_none")]
+    pub started_on: Option<chrono::DateTime<chrono::offset::Utc>>,
+}
+impl From<&BuildMetadata> for BuildMetadata {
+    fn from(value: &BuildMetadata) -> Self {
+        value.clone()
+    }
+}
+impl BuildMetadata {
+    pub fn builder() -> builder::BuildMetadata {
+        builder::BuildMetadata::default()
     }
 }
 ///A structure representing the builder information of the SLSA Provenance v1 Predicate.
@@ -91,26 +126,6 @@ impl InTotoStatementV1 {
         builder::InTotoStatementV1::default()
     }
 }
-///A structure representing the metadata of the SLSA Provenance v1 Predicate.
-#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
-pub struct Metadata {
-    #[serde(rename = "finishedOn", default, skip_serializing_if = "Option::is_none")]
-    pub finished_on: Option<chrono::DateTime<chrono::offset::Utc>>,
-    #[serde(rename = "invocationId")]
-    pub invocation_id: String,
-    #[serde(rename = "startedOn")]
-    pub started_on: chrono::DateTime<chrono::offset::Utc>,
-}
-impl From<&Metadata> for Metadata {
-    fn from(value: &Metadata) -> Self {
-        value.clone()
-    }
-}
-impl Metadata {
-    pub fn builder() -> builder::Metadata {
-        builder::Metadata::default()
-    }
-}
 /**An enum representing different predicate types.
 
 Known predicate types have their own variants, while unknown types are represented by the `Other` variant, which stores the raw JSON value.
@@ -133,25 +148,32 @@ impl Predicate {
         builder::Predicate::default()
     }
 }
-///A structure representing a resource descriptor in the SLSA Provenance v1 Predicate.
+///A size-efficient description of any software artifact or resource (mutable or immutable).
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct ResourceDescriptor {
+    ///This field MAY be used to provide additional information or metadata about the resource or artifact that may be useful to the consumer when evaluating the attestation against a policy.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub annotations: Option<serde_json::Value>,
+    pub annotations: Option<std::collections::HashMap<String, serde_json::Value>>,
+    ///The contents of the resource or artifact. This field is REQUIRED unless either uri or digest is set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    ///A set of cryptographic digests of the contents of the resource or artifact. This field is REQUIRED unless either uri or content is set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub digest: Option<std::collections::HashMap<String, String>>,
+    ///The location of the described resource or artifact, if different from the uri.
     #[serde(
         rename = "downloadLocation",
         default,
         skip_serializing_if = "Option::is_none"
     )]
     pub download_location: Option<String>,
+    ///The MIME Type (i.e., media type) of the described resource or artifact.
     #[serde(rename = "mediaType", default, skip_serializing_if = "Option::is_none")]
     pub media_type: Option<String>,
+    ///Machine-readable identifier for distinguishing between descriptors.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    ///A URI used to identify the resource or artifact globally. This field is REQUIRED unless either digest or content is set.
     pub uri: String,
 }
 impl From<&ResourceDescriptor> for ResourceDescriptor {
@@ -167,10 +189,14 @@ impl ResourceDescriptor {
 ///A structure representing the run details of the SLSA Provenance v1 Predicate.
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct RunDetails {
+    ///Identifies the build platform that executed the invocation, which is trusted to have correctly performed the operation and populated this provenance.
     pub builder: Builder,
+    ///Additional artifacts generated during the build that are not considered the “output” of the build but that might be needed during debugging or incident response. For example, this might reference logs generated during the build and/or a digest of the fully evaluated build configuration.\nIn most cases, this SHOULD NOT contain all intermediate files generated during the build. Instead, this SHOULD only contain files that are likely to be useful later and that cannot be easily reproduced.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub byproducts: Option<Vec<ResourceDescriptor>>,
-    pub metadata: Metadata,
+    ///metadata about this particular execution of the build.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<BuildMetadata>,
 }
 impl From<&RunDetails> for RunDetails {
     fn from(value: &RunDetails) -> Self {
@@ -220,9 +246,15 @@ pub mod builder {
     #[derive(Clone, Debug)]
     pub struct BuildDefinition {
         build_type: Result<String, String>,
-        external_parameters: Result<serde_json::Value, String>,
-        internal_parameters: Result<serde_json::Value, String>,
-        resolved_dependencies: Result<Vec<super::ResourceDescriptor>, String>,
+        external_parameters: Result<
+            std::collections::HashMap<String, serde_json::Value>,
+            String,
+        >,
+        internal_parameters: Result<
+            Option<std::collections::HashMap<String, serde_json::Value>>,
+            String,
+        >,
+        resolved_dependencies: Result<Option<Vec<super::ResourceDescriptor>>, String>,
     }
     impl Default for BuildDefinition {
         fn default() -> Self {
@@ -231,12 +263,8 @@ pub mod builder {
                 external_parameters: Err(
                     "no value supplied for external_parameters".to_string(),
                 ),
-                internal_parameters: Err(
-                    "no value supplied for internal_parameters".to_string(),
-                ),
-                resolved_dependencies: Err(
-                    "no value supplied for resolved_dependencies".to_string(),
-                ),
+                internal_parameters: Ok(Default::default()),
+                resolved_dependencies: Ok(Default::default()),
             }
         }
     }
@@ -256,7 +284,9 @@ pub mod builder {
         }
         pub fn external_parameters<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<serde_json::Value>,
+            T: std::convert::TryInto<
+                std::collections::HashMap<String, serde_json::Value>,
+            >,
             T::Error: std::fmt::Display,
         {
             self
@@ -271,7 +301,9 @@ pub mod builder {
         }
         pub fn internal_parameters<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<serde_json::Value>,
+            T: std::convert::TryInto<
+                Option<std::collections::HashMap<String, serde_json::Value>>,
+            >,
             T::Error: std::fmt::Display,
         {
             self
@@ -286,7 +318,7 @@ pub mod builder {
         }
         pub fn resolved_dependencies<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<Vec<super::ResourceDescriptor>>,
+            T: std::convert::TryInto<Option<Vec<super::ResourceDescriptor>>>,
             T::Error: std::fmt::Display,
         {
             self
@@ -319,6 +351,81 @@ pub mod builder {
                 external_parameters: Ok(value.external_parameters),
                 internal_parameters: Ok(value.internal_parameters),
                 resolved_dependencies: Ok(value.resolved_dependencies),
+            }
+        }
+    }
+    #[derive(Clone, Debug)]
+    pub struct BuildMetadata {
+        finished_on: Result<Option<chrono::DateTime<chrono::offset::Utc>>, String>,
+        invocation_id: Result<Option<String>, String>,
+        started_on: Result<Option<chrono::DateTime<chrono::offset::Utc>>, String>,
+    }
+    impl Default for BuildMetadata {
+        fn default() -> Self {
+            Self {
+                finished_on: Ok(Default::default()),
+                invocation_id: Ok(Default::default()),
+                started_on: Ok(Default::default()),
+            }
+        }
+    }
+    impl BuildMetadata {
+        pub fn finished_on<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<chrono::DateTime<chrono::offset::Utc>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .finished_on = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for finished_on: {}", e)
+                });
+            self
+        }
+        pub fn invocation_id<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<String>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .invocation_id = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for invocation_id: {}", e)
+                });
+            self
+        }
+        pub fn started_on<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<chrono::DateTime<chrono::offset::Utc>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .started_on = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for started_on: {}", e)
+                });
+            self
+        }
+    }
+    impl std::convert::TryFrom<BuildMetadata> for super::BuildMetadata {
+        type Error = String;
+        fn try_from(value: BuildMetadata) -> Result<Self, String> {
+            Ok(Self {
+                finished_on: value.finished_on?,
+                invocation_id: value.invocation_id?,
+                started_on: value.started_on?,
+            })
+        }
+    }
+    impl From<super::BuildMetadata> for BuildMetadata {
+        fn from(value: super::BuildMetadata) -> Self {
+            Self {
+                finished_on: Ok(value.finished_on),
+                invocation_id: Ok(value.invocation_id),
+                started_on: Ok(value.started_on),
             }
         }
     }
@@ -490,81 +597,6 @@ pub mod builder {
         }
     }
     #[derive(Clone, Debug)]
-    pub struct Metadata {
-        finished_on: Result<Option<chrono::DateTime<chrono::offset::Utc>>, String>,
-        invocation_id: Result<String, String>,
-        started_on: Result<chrono::DateTime<chrono::offset::Utc>, String>,
-    }
-    impl Default for Metadata {
-        fn default() -> Self {
-            Self {
-                finished_on: Ok(Default::default()),
-                invocation_id: Err("no value supplied for invocation_id".to_string()),
-                started_on: Err("no value supplied for started_on".to_string()),
-            }
-        }
-    }
-    impl Metadata {
-        pub fn finished_on<T>(mut self, value: T) -> Self
-        where
-            T: std::convert::TryInto<Option<chrono::DateTime<chrono::offset::Utc>>>,
-            T::Error: std::fmt::Display,
-        {
-            self
-                .finished_on = value
-                .try_into()
-                .map_err(|e| {
-                    format!("error converting supplied value for finished_on: {}", e)
-                });
-            self
-        }
-        pub fn invocation_id<T>(mut self, value: T) -> Self
-        where
-            T: std::convert::TryInto<String>,
-            T::Error: std::fmt::Display,
-        {
-            self
-                .invocation_id = value
-                .try_into()
-                .map_err(|e| {
-                    format!("error converting supplied value for invocation_id: {}", e)
-                });
-            self
-        }
-        pub fn started_on<T>(mut self, value: T) -> Self
-        where
-            T: std::convert::TryInto<chrono::DateTime<chrono::offset::Utc>>,
-            T::Error: std::fmt::Display,
-        {
-            self
-                .started_on = value
-                .try_into()
-                .map_err(|e| {
-                    format!("error converting supplied value for started_on: {}", e)
-                });
-            self
-        }
-    }
-    impl std::convert::TryFrom<Metadata> for super::Metadata {
-        type Error = String;
-        fn try_from(value: Metadata) -> Result<Self, String> {
-            Ok(Self {
-                finished_on: value.finished_on?,
-                invocation_id: value.invocation_id?,
-                started_on: value.started_on?,
-            })
-        }
-    }
-    impl From<super::Metadata> for Metadata {
-        fn from(value: super::Metadata) -> Self {
-            Self {
-                finished_on: Ok(value.finished_on),
-                invocation_id: Ok(value.invocation_id),
-                started_on: Ok(value.started_on),
-            }
-        }
-    }
-    #[derive(Clone, Debug)]
     pub struct Predicate {
         subtype_0: Result<Option<super::SlsaProvenanceV1Predicate>, String>,
         subtype_1: Result<Option<serde_json::Value>, String>,
@@ -624,7 +656,10 @@ pub mod builder {
     }
     #[derive(Clone, Debug)]
     pub struct ResourceDescriptor {
-        annotations: Result<Option<serde_json::Value>, String>,
+        annotations: Result<
+            Option<std::collections::HashMap<String, serde_json::Value>>,
+            String,
+        >,
         content: Result<Option<String>, String>,
         digest: Result<Option<std::collections::HashMap<String, String>>, String>,
         download_location: Result<Option<String>, String>,
@@ -648,7 +683,9 @@ pub mod builder {
     impl ResourceDescriptor {
         pub fn annotations<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<Option<serde_json::Value>>,
+            T: std::convert::TryInto<
+                Option<std::collections::HashMap<String, serde_json::Value>>,
+            >,
             T::Error: std::fmt::Display,
         {
             self
@@ -767,14 +804,14 @@ pub mod builder {
     pub struct RunDetails {
         builder: Result<super::Builder, String>,
         byproducts: Result<Option<Vec<super::ResourceDescriptor>>, String>,
-        metadata: Result<super::Metadata, String>,
+        metadata: Result<Option<super::BuildMetadata>, String>,
     }
     impl Default for RunDetails {
         fn default() -> Self {
             Self {
                 builder: Err("no value supplied for builder".to_string()),
                 byproducts: Ok(Default::default()),
-                metadata: Err("no value supplied for metadata".to_string()),
+                metadata: Ok(Default::default()),
             }
         }
     }
@@ -807,7 +844,7 @@ pub mod builder {
         }
         pub fn metadata<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<super::Metadata>,
+            T: std::convert::TryInto<Option<super::BuildMetadata>>,
             T::Error: std::fmt::Display,
         {
             self

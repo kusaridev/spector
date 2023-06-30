@@ -127,17 +127,17 @@ mod tests {
         SLSAProvenanceV1Predicate {
             build_definition: BuildDefinition {
                 build_type: Url::parse("https://example.com/buildType/v1").unwrap(),
-                external_parameters: json!({"key": "value"}),
-                internal_parameters: json!({"key": "value"}),
-                resolved_dependencies: vec![ResourceDescriptor {
+                external_parameters: json!({"key": "value"}).as_object().unwrap().clone(),
+                internal_parameters: Some(json!({"key": "value"}).as_object().unwrap().clone()),
+                resolved_dependencies: Some(vec![ResourceDescriptor {
                     uri: Url::parse("https://example.com/dependency1").unwrap(),
                     digest: Some(hashmap! {"algorithm1".to_string() => "digest1".to_string()}),
                     name: Some("dependency1".to_string()),
                     download_location: Some(Url::parse("https://example.com/download1").unwrap()),
                     media_type: Some("media/type1".to_string()),
                     content: Some(b"content1".to_vec()),
-                    annotations: Some(json!({"key": "value"})),
-                }],
+                    annotations: Some(json!({"key": "value"}).as_object().unwrap().clone()),
+                }]),
             },
             run_details: RunDetails {
                 builder: Builder {
@@ -151,21 +151,21 @@ mod tests {
                         ),
                         media_type: Some("media/type1".to_string()),
                         content: Some(b"content1".to_vec()),
-                        annotations: Some(json!({"key": "value"})),
+                        annotations: Some(json!({"key": "value"}).as_object().unwrap().clone()),
                     }]),
                     version: Some("1.0.0".to_string()),
                 },
-                metadata: BuildMetadata {
-                    invocation_id: "invocation1".to_string(),
-                    started_on: DateTime::parse_from_rfc3339("2023-01-01T12:34:56Z")
+                metadata: Some(BuildMetadata {
+                    invocation_id: Some("invocation1".to_string()),
+                    started_on: Some(DateTime::parse_from_rfc3339("2023-01-01T12:34:56Z")
                         .unwrap()
-                        .with_timezone(&Utc),
+                        .with_timezone(&Utc)),
                     finished_on: Some(
                         DateTime::parse_from_rfc3339("2023-01-01T13:34:56Z")
                             .unwrap()
                             .with_timezone(&Utc),
                     ),
-                },
+                }),
                 byproducts: Some(vec![ResourceDescriptor {
                     uri: Url::parse("https://example.com/byproduct1").unwrap(),
                     digest: Some(hashmap! {"algorithm1".to_string() => "digest1".to_string()}),
@@ -175,7 +175,7 @@ mod tests {
                     ),
                     media_type: Some("media/type1".to_string()),
                     content: Some(b"content1".to_vec()),
-                    annotations: Some(json!({"key": "value"})),
+                    annotations: Some(json!({"key": "value"}).as_object().unwrap().clone()),
                 }]),
             },
         }
