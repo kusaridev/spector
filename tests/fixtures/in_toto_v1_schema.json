@@ -29,6 +29,46 @@
     }
   },
   "definitions": {
+    "Attribute": {
+      "type": "object",
+      "required": [
+        "attribute"
+      ],
+      "properties": {
+        "attribute": {
+          "type": "string"
+        },
+        "conditions": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ResourceDescriptor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "target": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ResourceDescriptor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
     "BuildDefinition": {
       "description": "A structure representing the build definition of the SLSA Provenance v1 Predicate.",
       "type": "object",
@@ -136,6 +176,9 @@
         {
           "$ref": "#/definitions/SLSAProvenanceV1Predicate"
         },
+        {
+          "$ref": "#/definitions/SCAIV02Predicate"
+        },
         true
       ]
     },
@@ -224,6 +267,31 @@
           "anyOf": [
             {
               "$ref": "#/definitions/BuildMetadata"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "SCAIV02Predicate": {
+      "description": "This is based on the model in: { \"predicateType\": \"https://in-toto.io/attestation/scai/attribute-report/v0.2\", \"predicate\": { \"attributes\": [{ \"attribute\": \"<ATTRIBUTE>\", \"target\": { [ResourceDescriptor] }, // optional \"conditions\": { /* object */ }, // optional \"evidence\": { [ResourceDescriptor] } // optional }], \"producer\": { [ResourceDescriptor] } // optional } } A structure representing the SLSA Provenance v1 Predicate.",
+      "type": "object",
+      "required": [
+        "attributes"
+      ],
+      "properties": {
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Attribute"
+          }
+        },
+        "producer": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ResourceDescriptor"
             },
             {
               "type": "null"

@@ -5,6 +5,7 @@
 //! and generic `Other` variants.
 
 use super::provenance::SLSAProvenanceV1Predicate;
+use super::scai::SCAIV02Predicate;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 use serde_json::Value;
@@ -20,6 +21,7 @@ use serde_json::Value;
 #[serde(untagged)]
 pub enum Predicate {
     SLSAProvenanceV1(SLSAProvenanceV1Predicate),
+    SCAIV02(SCAIV02Predicate),
     Other(Value),
 }
 
