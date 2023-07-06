@@ -3,6 +3,26 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 use serde::{Deserialize, Serialize};
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct Attribute {
+    pub attribute: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub conditions: Option<std::collections::HashMap<String, String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub evidence: Option<ResourceDescriptor>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<ResourceDescriptor>,
+}
+impl From<&Attribute> for Attribute {
+    fn from(value: &Attribute) -> Self {
+        value.clone()
+    }
+}
+impl Attribute {
+    pub fn builder() -> builder::Attribute {
+        builder::Attribute::default()
+    }
+}
 ///A structure representing the build definition of the SLSA Provenance v1 Predicate.
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct BuildDefinition {
@@ -136,7 +156,9 @@ pub struct Predicate {
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub subtype_0: Option<SlsaProvenanceV1Predicate>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
-    pub subtype_1: Option<serde_json::Value>,
+    pub subtype_1: Option<Scaiv02Predicate>,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub subtype_2: Option<serde_json::Value>,
 }
 impl From<&Predicate> for Predicate {
     fn from(value: &Predicate) -> Self {
@@ -208,6 +230,23 @@ impl RunDetails {
         builder::RunDetails::default()
     }
 }
+///This is based on the model in: { "predicateType": "https://in-toto.io/attestation/scai/attribute-report/v0.2", "predicate": { "attributes": [{ "attribute": "<ATTRIBUTE>", "target": { [ResourceDescriptor] }, // optional "conditions": { /* object */ }, // optional "evidence": { [ResourceDescriptor] } // optional }], "producer": { [ResourceDescriptor] } // optional } } A structure representing the SLSA Provenance v1 Predicate.
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct Scaiv02Predicate {
+    pub attributes: Vec<Attribute>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub producer: Option<ResourceDescriptor>,
+}
+impl From<&Scaiv02Predicate> for Scaiv02Predicate {
+    fn from(value: &Scaiv02Predicate) -> Self {
+        value.clone()
+    }
+}
+impl Scaiv02Predicate {
+    pub fn builder() -> builder::Scaiv02Predicate {
+        builder::Scaiv02Predicate::default()
+    }
+}
 ///A structure representing the SLSA Provenance v1 Predicate.
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct SlsaProvenanceV1Predicate {
@@ -243,6 +282,98 @@ impl Subject {
     }
 }
 pub mod builder {
+    #[derive(Clone, Debug)]
+    pub struct Attribute {
+        attribute: Result<String, String>,
+        conditions: Result<Option<std::collections::HashMap<String, String>>, String>,
+        evidence: Result<Option<super::ResourceDescriptor>, String>,
+        target: Result<Option<super::ResourceDescriptor>, String>,
+    }
+    impl Default for Attribute {
+        fn default() -> Self {
+            Self {
+                attribute: Err("no value supplied for attribute".to_string()),
+                conditions: Ok(Default::default()),
+                evidence: Ok(Default::default()),
+                target: Ok(Default::default()),
+            }
+        }
+    }
+    impl Attribute {
+        pub fn attribute<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<String>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .attribute = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for attribute: {}", e)
+                });
+            self
+        }
+        pub fn conditions<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<std::collections::HashMap<String, String>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .conditions = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for conditions: {}", e)
+                });
+            self
+        }
+        pub fn evidence<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<super::ResourceDescriptor>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .evidence = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for evidence: {}", e)
+                });
+            self
+        }
+        pub fn target<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<super::ResourceDescriptor>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .target = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for target: {}", e)
+                });
+            self
+        }
+    }
+    impl std::convert::TryFrom<Attribute> for super::Attribute {
+        type Error = String;
+        fn try_from(value: Attribute) -> Result<Self, String> {
+            Ok(Self {
+                attribute: value.attribute?,
+                conditions: value.conditions?,
+                evidence: value.evidence?,
+                target: value.target?,
+            })
+        }
+    }
+    impl From<super::Attribute> for Attribute {
+        fn from(value: super::Attribute) -> Self {
+            Self {
+                attribute: Ok(value.attribute),
+                conditions: Ok(value.conditions),
+                evidence: Ok(value.evidence),
+                target: Ok(value.target),
+            }
+        }
+    }
     #[derive(Clone, Debug)]
     pub struct BuildDefinition {
         build_type: Result<String, String>,
@@ -599,13 +730,15 @@ pub mod builder {
     #[derive(Clone, Debug)]
     pub struct Predicate {
         subtype_0: Result<Option<super::SlsaProvenanceV1Predicate>, String>,
-        subtype_1: Result<Option<serde_json::Value>, String>,
+        subtype_1: Result<Option<super::Scaiv02Predicate>, String>,
+        subtype_2: Result<Option<serde_json::Value>, String>,
     }
     impl Default for Predicate {
         fn default() -> Self {
             Self {
                 subtype_0: Ok(Default::default()),
                 subtype_1: Ok(Default::default()),
+                subtype_2: Ok(Default::default()),
             }
         }
     }
@@ -625,7 +758,7 @@ pub mod builder {
         }
         pub fn subtype_1<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<Option<serde_json::Value>>,
+            T: std::convert::TryInto<Option<super::Scaiv02Predicate>>,
             T::Error: std::fmt::Display,
         {
             self
@@ -636,6 +769,19 @@ pub mod builder {
                 });
             self
         }
+        pub fn subtype_2<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<serde_json::Value>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .subtype_2 = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for subtype_2: {}", e)
+                });
+            self
+        }
     }
     impl std::convert::TryFrom<Predicate> for super::Predicate {
         type Error = String;
@@ -643,6 +789,7 @@ pub mod builder {
             Ok(Self {
                 subtype_0: value.subtype_0?,
                 subtype_1: value.subtype_1?,
+                subtype_2: value.subtype_2?,
             })
         }
     }
@@ -651,6 +798,7 @@ pub mod builder {
             Self {
                 subtype_0: Ok(value.subtype_0),
                 subtype_1: Ok(value.subtype_1),
+                subtype_2: Ok(value.subtype_2),
             }
         }
     }
@@ -872,6 +1020,64 @@ pub mod builder {
                 builder: Ok(value.builder),
                 byproducts: Ok(value.byproducts),
                 metadata: Ok(value.metadata),
+            }
+        }
+    }
+    #[derive(Clone, Debug)]
+    pub struct Scaiv02Predicate {
+        attributes: Result<Vec<super::Attribute>, String>,
+        producer: Result<Option<super::ResourceDescriptor>, String>,
+    }
+    impl Default for Scaiv02Predicate {
+        fn default() -> Self {
+            Self {
+                attributes: Err("no value supplied for attributes".to_string()),
+                producer: Ok(Default::default()),
+            }
+        }
+    }
+    impl Scaiv02Predicate {
+        pub fn attributes<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Vec<super::Attribute>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .attributes = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for attributes: {}", e)
+                });
+            self
+        }
+        pub fn producer<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<super::ResourceDescriptor>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .producer = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for producer: {}", e)
+                });
+            self
+        }
+    }
+    impl std::convert::TryFrom<Scaiv02Predicate> for super::Scaiv02Predicate {
+        type Error = String;
+        fn try_from(value: Scaiv02Predicate) -> Result<Self, String> {
+            Ok(Self {
+                attributes: value.attributes?,
+                producer: value.producer?,
+            })
+        }
+    }
+    impl From<super::Scaiv02Predicate> for Scaiv02Predicate {
+        fn from(value: super::Scaiv02Predicate) -> Self {
+            Self {
+                attributes: Ok(value.attributes),
+                producer: Ok(value.producer),
             }
         }
     }

@@ -86,8 +86,10 @@ pub struct ResourceDescriptor {
     /// A URI used to identify the resource or artifact globally. This field is REQUIRED unless either digest or content is set.
     pub uri: Url,
     /// A set of cryptographic digests of the contents of the resource or artifact. This field is REQUIRED unless either uri or content is set.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub digest: Option<HashMap<String, String>>,
     /// Machine-readable identifier for distinguishing between descriptors.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     #[serde(
         rename = "downloadLocation",
@@ -98,7 +100,7 @@ pub struct ResourceDescriptor {
     #[schemars(with = "Url")]
     /// The location of the described resource or artifact, if different from the uri.
     pub download_location: Option<Url>,
-    #[serde(rename = "mediaType")]
+    #[serde(rename = "mediaType", skip_serializing_if = "Option::is_none")]
     /// The MIME Type (i.e., media type) of the described resource or artifact.
     pub media_type: Option<String>,
     // TODO(mlieberman85): Fix below. Serde was erroring without the default attribute.
@@ -110,10 +112,11 @@ pub struct ResourceDescriptor {
     )]
     // TODO(mlieberman85): Use a base64 type when this issue is resolved:
     // https://github.com/GREsau/schemars/issues/160
-    #[schemars(with = "String")]
     /// The contents of the resource or artifact. This field is REQUIRED unless either uri or digest is set.
+    #[schemars(with = "String")]
     pub content: Option<Vec<u8>>,
     /// This field MAY be used to provide additional information or metadata about the resource or artifact that may be useful to the consumer when evaluating the attestation against a policy.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub annotations: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
