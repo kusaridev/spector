@@ -23,7 +23,7 @@ use super::provenance::ResourceDescriptor;
 ///     }
 /// }
 
-/// A structure representing the SLSA Provenance v1 Predicate.
+/// A struct representing the SCAI V0.2 Predicate.
 #[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct SCAIV02Predicate {
     pub attributes: Vec<Attribute>,
@@ -31,6 +31,7 @@ pub struct SCAIV02Predicate {
     pub producer: Option<ResourceDescriptor>,
 }
 
+/// A struct 
 #[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct Attribute {
     pub attribute: String,

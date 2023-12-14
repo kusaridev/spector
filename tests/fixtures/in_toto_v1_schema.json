@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "InTotoStatementV1",
+  "title": "InTotoStatementV1_for_Predicate",
   "description": "Represents an In-Toto v1 statement.",
   "type": "object",
   "required": [
@@ -30,6 +30,7 @@
   },
   "definitions": {
     "Attribute": {
+      "description": "A struct",
       "type": "object",
       "required": [
         "attribute"
@@ -276,7 +277,7 @@
       }
     },
     "SCAIV02Predicate": {
-      "description": "This is based on the model in: { \"predicateType\": \"https://in-toto.io/attestation/scai/attribute-report/v0.2\", \"predicate\": { \"attributes\": [{ \"attribute\": \"<ATTRIBUTE>\", \"target\": { [ResourceDescriptor] }, // optional \"conditions\": { /* object */ }, // optional \"evidence\": { [ResourceDescriptor] } // optional }], \"producer\": { [ResourceDescriptor] } // optional } } A structure representing the SLSA Provenance v1 Predicate.",
+      "description": "This is based on the model in: { \"predicateType\": \"https://in-toto.io/attestation/scai/attribute-report/v0.2\", \"predicate\": { \"attributes\": [{ \"attribute\": \"<ATTRIBUTE>\", \"target\": { [ResourceDescriptor] }, // optional \"conditions\": { /* object */ }, // optional \"evidence\": { [ResourceDescriptor] } // optional }], \"producer\": { [ResourceDescriptor] } // optional } } A struct representing the SCAI V0.2 Predicate.",
       "type": "object",
       "required": [
         "attributes"

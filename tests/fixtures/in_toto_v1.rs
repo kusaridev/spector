@@ -3,6 +3,7 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 use serde::{Deserialize, Serialize};
+///A struct
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Attribute {
     pub attribute: String,
@@ -28,17 +29,16 @@ impl Attribute {
 pub struct BuildDefinition {
     #[serde(rename = "buildType")]
     pub build_type: String,
+    ///The parameters that are under external control, such as those set by a user or tenant of the build platform. They MUST be complete at SLSA Build L3, meaning that there is no additional mechanism for an external party to influence the build. (At lower SLSA Build levels, the completeness MAY be best effort.)\nThe build platform SHOULD be designed to minimize the size and complexity of externalParameters, in order to reduce fragility and ease verification. Consumers SHOULD have an expectation of what “good” looks like; the more information that they need to check, the harder that task becomes.\nVerifiers SHOULD reject unrecognized or unexpected fields within externalParameters.
     #[serde(rename = "externalParameters")]
-    pub external_parameters: std::collections::HashMap<String, serde_json::Value>,
+    pub external_parameters: serde_json::Map<String, serde_json::Value>,
     ///Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.
     #[serde(
         rename = "internalParameters",
         default,
         skip_serializing_if = "Option::is_none"
     )]
-    pub internal_parameters: Option<
-        std::collections::HashMap<String, serde_json::Value>,
-    >,
+    pub internal_parameters: Option<serde_json::Map<String, serde_json::Value>>,
     ///Unordered collection of artifacts needed at build time. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.
     #[serde(
         rename = "resolvedDependencies",
@@ -103,6 +103,7 @@ impl Builder {
         builder::Builder::default()
     }
 }
+///Represents a set of digests, mapping algorithms to their respective digest strings.
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct DigestSet(pub std::collections::HashMap<String, String>);
 impl std::ops::Deref for DigestSet {
@@ -128,7 +129,7 @@ impl From<std::collections::HashMap<String, String>> for DigestSet {
 }
 ///Represents an In-Toto v1 statement.
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
-pub struct InTotoStatementV1 {
+pub struct InTotoStatementV1ForPredicate {
     pub predicate: Predicate,
     #[serde(rename = "predicateType")]
     pub predicate_type: String,
@@ -136,14 +137,14 @@ pub struct InTotoStatementV1 {
     #[serde(rename = "_type")]
     pub type_: String,
 }
-impl From<&InTotoStatementV1> for InTotoStatementV1 {
-    fn from(value: &InTotoStatementV1) -> Self {
+impl From<&InTotoStatementV1ForPredicate> for InTotoStatementV1ForPredicate {
+    fn from(value: &InTotoStatementV1ForPredicate) -> Self {
         value.clone()
     }
 }
-impl InTotoStatementV1 {
-    pub fn builder() -> builder::InTotoStatementV1 {
-        builder::InTotoStatementV1::default()
+impl InTotoStatementV1ForPredicate {
+    pub fn builder() -> builder::InTotoStatementV1ForPredicate {
+        builder::InTotoStatementV1ForPredicate::default()
     }
 }
 /**An enum representing different predicate types.
@@ -175,7 +176,7 @@ impl Predicate {
 pub struct ResourceDescriptor {
     ///This field MAY be used to provide additional information or metadata about the resource or artifact that may be useful to the consumer when evaluating the attestation against a policy.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub annotations: Option<std::collections::HashMap<String, serde_json::Value>>,
+    pub annotations: Option<serde_json::Map<String, serde_json::Value>>,
     ///The contents of the resource or artifact. This field is REQUIRED unless either uri or digest is set.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
@@ -230,7 +231,7 @@ impl RunDetails {
         builder::RunDetails::default()
     }
 }
-///This is based on the model in: { "predicateType": "https://in-toto.io/attestation/scai/attribute-report/v0.2", "predicate": { "attributes": [{ "attribute": "<ATTRIBUTE>", "target": { [ResourceDescriptor] }, // optional "conditions": { /* object */ }, // optional "evidence": { [ResourceDescriptor] } // optional }], "producer": { [ResourceDescriptor] } // optional } } A structure representing the SLSA Provenance v1 Predicate.
+///This is based on the model in: { "predicateType": "https://in-toto.io/attestation/scai/attribute-report/v0.2", "predicate": { "attributes": [{ "attribute": "<ATTRIBUTE>", "target": { [ResourceDescriptor] }, // optional "conditions": { /* object */ }, // optional "evidence": { [ResourceDescriptor] } // optional }], "producer": { [ResourceDescriptor] } // optional } } A struct representing the SCAI V0.2 Predicate.
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Scaiv02Predicate {
     pub attributes: Vec<Attribute>,
@@ -377,12 +378,9 @@ pub mod builder {
     #[derive(Clone, Debug)]
     pub struct BuildDefinition {
         build_type: Result<String, String>,
-        external_parameters: Result<
-            std::collections::HashMap<String, serde_json::Value>,
-            String,
-        >,
+        external_parameters: Result<serde_json::Map<String, serde_json::Value>, String>,
         internal_parameters: Result<
-            Option<std::collections::HashMap<String, serde_json::Value>>,
+            Option<serde_json::Map<String, serde_json::Value>>,
             String,
         >,
         resolved_dependencies: Result<Option<Vec<super::ResourceDescriptor>>, String>,
@@ -415,9 +413,7 @@ pub mod builder {
         }
         pub fn external_parameters<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<
-                std::collections::HashMap<String, serde_json::Value>,
-            >,
+            T: std::convert::TryInto<serde_json::Map<String, serde_json::Value>>,
             T::Error: std::fmt::Display,
         {
             self
@@ -432,9 +428,7 @@ pub mod builder {
         }
         pub fn internal_parameters<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<
-                Option<std::collections::HashMap<String, serde_json::Value>>,
-            >,
+            T: std::convert::TryInto<Option<serde_json::Map<String, serde_json::Value>>>,
             T::Error: std::fmt::Display,
         {
             self
@@ -636,13 +630,13 @@ pub mod builder {
         }
     }
     #[derive(Clone, Debug)]
-    pub struct InTotoStatementV1 {
+    pub struct InTotoStatementV1ForPredicate {
         predicate: Result<super::Predicate, String>,
         predicate_type: Result<String, String>,
         subject: Result<Vec<super::Subject>, String>,
         type_: Result<String, String>,
     }
-    impl Default for InTotoStatementV1 {
+    impl Default for InTotoStatementV1ForPredicate {
         fn default() -> Self {
             Self {
                 predicate: Err("no value supplied for predicate".to_string()),
@@ -652,7 +646,7 @@ pub mod builder {
             }
         }
     }
-    impl InTotoStatementV1 {
+    impl InTotoStatementV1ForPredicate {
         pub fn predicate<T>(mut self, value: T) -> Self
         where
             T: std::convert::TryInto<super::Predicate>,
@@ -706,9 +700,10 @@ pub mod builder {
             self
         }
     }
-    impl std::convert::TryFrom<InTotoStatementV1> for super::InTotoStatementV1 {
+    impl std::convert::TryFrom<InTotoStatementV1ForPredicate>
+    for super::InTotoStatementV1ForPredicate {
         type Error = String;
-        fn try_from(value: InTotoStatementV1) -> Result<Self, String> {
+        fn try_from(value: InTotoStatementV1ForPredicate) -> Result<Self, String> {
             Ok(Self {
                 predicate: value.predicate?,
                 predicate_type: value.predicate_type?,
@@ -717,8 +712,8 @@ pub mod builder {
             })
         }
     }
-    impl From<super::InTotoStatementV1> for InTotoStatementV1 {
-        fn from(value: super::InTotoStatementV1) -> Self {
+    impl From<super::InTotoStatementV1ForPredicate> for InTotoStatementV1ForPredicate {
+        fn from(value: super::InTotoStatementV1ForPredicate) -> Self {
             Self {
                 predicate: Ok(value.predicate),
                 predicate_type: Ok(value.predicate_type),
@@ -804,10 +799,7 @@ pub mod builder {
     }
     #[derive(Clone, Debug)]
     pub struct ResourceDescriptor {
-        annotations: Result<
-            Option<std::collections::HashMap<String, serde_json::Value>>,
-            String,
-        >,
+        annotations: Result<Option<serde_json::Map<String, serde_json::Value>>, String>,
         content: Result<Option<String>, String>,
         digest: Result<Option<std::collections::HashMap<String, String>>, String>,
         download_location: Result<Option<String>, String>,
@@ -831,9 +823,7 @@ pub mod builder {
     impl ResourceDescriptor {
         pub fn annotations<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<
-                Option<std::collections::HashMap<String, serde_json::Value>>,
-            >,
+            T: std::convert::TryInto<Option<serde_json::Map<String, serde_json::Value>>>,
             T::Error: std::fmt::Display,
         {
             self

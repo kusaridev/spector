@@ -9,6 +9,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use url::Url;
+use std::fmt::Debug;
 
 use crate::models::{
     helpers::url_serde,
@@ -16,8 +17,8 @@ use crate::models::{
 };
 
 /// Represents an In-Toto v1 statement.
-#[derive(Debug, Serialize, JsonSchema)]
-pub struct InTotoStatementV1 {
+#[derive(Debug, Serialize, PartialEq, JsonSchema)]
+pub struct InTotoStatementV1<T: Debug + Serialize + PartialEq + JsonSchema = Predicate> {
     #[serde(rename = "_type", with = "url_serde")]
     #[schemars(with = "Url")]
     pub _type: Url,
@@ -25,7 +26,7 @@ pub struct InTotoStatementV1 {
     #[serde(rename = "predicateType", with = "url_serde")]
     #[schemars(with = "Url")]
     pub predicate_type: Url,
-    pub predicate: Predicate,
+    pub predicate: T,
 }
 
 /// Enum for the supported hashing algorithms.

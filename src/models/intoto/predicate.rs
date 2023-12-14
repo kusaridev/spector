@@ -45,6 +45,10 @@ pub fn deserialize_predicate(
             let slsa_provenance = deserialize_helper::<SLSAProvenanceV1Predicate>(predicate_json)?;
             Ok(Predicate::SLSAProvenanceV1(slsa_provenance))
         }
+        "https://in-toto.io/attestation/scai/attribute-report" => {
+            let scai_v02 = deserialize_helper::<SCAIV02Predicate>(predicate_json)?;
+            Ok(Predicate::SCAIV02(scai_v02))
+        }
         _ => {
             let other_predicate = deserialize_helper::<Value>(predicate_json)?;
             Ok(Predicate::Other(other_predicate))

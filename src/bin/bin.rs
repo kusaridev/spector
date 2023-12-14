@@ -14,7 +14,7 @@ use spector::{
     models::{
         intoto::{
             predicate::Predicate, provenance::SLSAProvenanceV1Predicate,
-            statement::InTotoStatementV1,
+            statement::{InTotoStatementV1}, scai::SCAIV02Predicate,
         },
         sbom::{spdx22::Spdx22Document, spdx23::Spdx23},
     },
@@ -104,6 +104,8 @@ enum ValidateDocumentSubCommand {
 #[derive(Parser)]
 enum GenerateDocumentSubCommand {
     InTotoV1(GenerateInTotoV1),
+    SLSAProvenanceV01,
+    SCAIV02,
 }
 
 // The In-Toto v1 validate document subcommand
@@ -149,9 +151,10 @@ struct GenerateInTotoV1 {
     predicate: Option<PredicateOption>,
 }
 
-#[derive(Copy, Clone, ValueEnum)]
+#[derive(Debug, Copy, Clone, ValueEnum)]
 enum PredicateOption {
     SLSAProvenanceV1,
+    SCAIV02Predicate,
 }
 
 #[derive(Parser)]
@@ -171,6 +174,8 @@ fn validate_cmd(validate: Validate) -> Result<()> {
 fn generate_cmd(generate: SchemaGenerate) -> Result<()> {
     match generate.document {
         GenerateDocumentSubCommand::InTotoV1(in_toto) => generate_intoto_v1(in_toto),
+        GenerateDocumentSubCommand::SLSAProvenanceV01 => generate_slsa_provenancev01(),
+        GenerateDocumentSubCommand::SCAIV02 => generate_scaiv02()
     }
 }
 
@@ -190,22 +195,49 @@ fn validate_intoto_v1(in_toto: ValidateInTotoV1) -> Result<()> {
                         Ok(())
                     }
                     // TODO(mlieberman85): Uncomment below once additional predicate types are supported.
-                    /*Some(_) => {
-                        eprintln!("Invalid InTotoV1 SLSAProvenanceV1 document");
+                    Some(_) => {
+                        eprintln!("Invalid InTotoV1 SLSAProvenanceV1 document. Unexpected predicateType: {:?}", in_toto.predicate);
                         eprintln!("Document: {}", &pretty_json);
                         Err(anyhow::anyhow!(
                             "Invalid InTotoV1 SLSAProvenanceV1 document"
                         ))
-                    }*/
+                    }
                     None => {
                         println!("Valid InTotoV1 SLSAProvenanceV1 document");
                         println!("Document: {}", &pretty_json);
                         Ok(())
                     }
                 },
+                Predicate::SCAIV02(_) => match in_toto.predicate {
+                    Some(PredicateOption::SCAIV02Predicate) => {
+                        println!("Valid InTotoV1 SCAIV02Predicate document");
+                        println!("Document: {}", &pretty_json);
+                        Ok(())
+                    }
+                    Some(_) => {
+                        eprintln!("Invalid InTotoV1 SCAIV02Predicate document. Unexpected predicateType: {:?}", in_toto.predicate);
+                        eprintln!("Document: {}", &pretty_json);
+                        Err(anyhow::anyhow!(
+                            "Invalid InTotoV1 SCAIV02Predicate document"
+                        ))
+                    }
+                    None => {
+                        println!("Valid InTotoV1 SCAIV02Predicate document");
+                        println!("Document: {}", &pretty_json);
+                        Ok(())
+                    }
+                }
                 _ => {
                     if let Some(PredicateOption::SLSAProvenanceV1) = in_toto.predicate {
                         eprintln!("Invalid InTotoV1 SLSAProvenanceV1 document");
+                        eprintln!("Document: {}", &pretty_json);
+                        Err(anyhow::anyhow!(
+                            "Unexpected predicateType: {:?}",
+                            statement.predicate_type.as_str()
+                        ))
+                    }
+                    else if let Some(PredicateOption::SCAIV02Predicate) = in_toto.predicate {
+                        eprintln!("Invalid InTotoV1 SCAIV02Predicate document");
                         eprintln!("Document: {}", &pretty_json);
                         Err(anyhow::anyhow!(
                             "Unexpected predicateType: {:?}",
@@ -256,8 +288,17 @@ fn validate_document<T: DeserializeOwned>(file_path: PathBuf) -> Result<()> {
 fn generate_intoto_v1(in_toto: GenerateInTotoV1) -> Result<()> {
     match in_toto.predicate {
         Some(PredicateOption::SLSAProvenanceV1) => print_schema::<SLSAProvenanceV1Predicate>(),
+        Some(PredicateOption::SCAIV02Predicate) => print_schema::<SCAIV02Predicate>(),
         None => print_schema::<InTotoStatementV1>(),
     }
+}
+
+fn generate_scaiv02() -> Result<()> {
+    print_schema::<InTotoStatementV1<SCAIV02Predicate>>()
+}
+
+fn generate_slsa_provenancev01() -> Result<()> {
+    print_schema::<InTotoStatementV1<SLSAProvenanceV1Predicate>>()
 }
 
 /// Generates Rust code from a JSON schema file.
