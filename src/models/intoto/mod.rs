@@ -1,5 +1,6 @@
 pub mod predicate;
-pub mod provenance;
+pub mod provenancev1;
+pub mod provenancev02;
 pub mod statement;
 pub mod scai;
 

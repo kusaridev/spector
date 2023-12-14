@@ -136,6 +136,53 @@
         }
       }
     },
+    "BuildMetadata2": {
+      "description": "A structure representing the metadata of the SLSA Provenance v0.2 Predicate.",
+      "type": "object",
+      "properties": {
+        "buildFinishedOn": {
+          "description": "The timestamp of when the build completed.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "buildInvocationId": {
+          "description": "Identifies this particular build invocation, which can be useful for finding associated logs or other ad-hoc analysis. The exact meaning and format is defined by builder.id; by default it is treated as opaque and case-sensitive. The value SHOULD be globally unique.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "buildStartedOn": {
+          "description": "The timestamp of when the build started.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "completeness": {
+          "description": "Information on how complete the provided information is.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Completeness"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reproducible": {
+          "description": "Whether the builder claims that running invocation on materials will produce bit-for-bit identical output.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
     "Builder": {
       "description": "A structure representing the builder information of the SLSA Provenance v1 Predicate.",
       "type": "object",
@@ -164,6 +211,77 @@
         }
       }
     },
+    "Builder2": {
+      "description": "A structure representing the builder information of the SLSA Provenance v0.2 Predicate.",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "Completeness": {
+      "description": "A structure representing the completeness claims of the SLSA Provenance v0.2 Predicate.",
+      "type": "object",
+      "properties": {
+        "environment": {
+          "description": "Whether the builder claims that invocation.environment is complete.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "materials": {
+          "description": "Whether the builder claims that materials is complete, usually through some controls to prevent network access.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "parameters": {
+          "description": "Whether the builder claims that nvocation.parameters is complete, meaning that all external inputs are properly captured in invocation.parameters.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "ConfigSource": {
+      "description": "A structure representing the description of where the config file that kicked off the build came from in the SLSA Provenance v0.2 Predicate.",
+      "type": "object",
+      "properties": {
+        "digest": {
+          "description": "A set of cryptographic digests of the contents of the resource or artifact.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "entryPoint": {
+          "description": "The entry point into the build. This is often a path to a configuration file and/or a target label within that file.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "uri": {
+          "description": "The identity of the source of the config.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        }
+      }
+    },
     "DigestSet": {
       "description": "Represents a set of digests, mapping algorithms to their respective digest strings.",
       "type": "object",
@@ -171,11 +289,47 @@
         "type": "string"
       }
     },
+    "Invocation": {
+      "description": "A structure identifying the event that kicked off the build in the SLSA Provenance v0.2 Predicate.",
+      "type": "object",
+      "properties": {
+        "configSource": {
+          "description": "Description of where the config file that kicked off the build came from. This is effectively a pointer to the source where buildConfig came from.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ConfigSource"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "environment": {
+          "description": "Any other builder-controlled inputs necessary for correctly evaluating the build. Usually only needed for reproducing the build but not evaluated as part of policy.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        },
+        "parameters": {
+          "description": "Collection of all external inputs that influenced the build on top of invocation.configSource.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        }
+      }
+    },
     "Predicate": {
       "description": "An enum representing different predicate types.\n\nKnown predicate types have their own variants, while unknown types are represented by the `Other` variant, which stores the raw JSON value.\n\nTODO(mlieberman85): Support (de)serializing the predicates based on the predicateType URL in the statement.",
       "anyOf": [
         {
           "$ref": "#/definitions/SLSAProvenanceV1Predicate"
+        },
+        {
+          "$ref": "#/definitions/SLSAProvenanceV02Predicate"
         },
         {
           "$ref": "#/definitions/SCAIV02Predicate"
@@ -238,6 +392,30 @@
         }
       }
     },
+    "ResourceDescriptor2": {
+      "description": "A size-efficient description of any software artifact or resource (mutable or immutable).",
+      "type": "object",
+      "properties": {
+        "digest": {
+          "description": "A set of cryptographic digests of the contents of the resource or artifact. This field is REQUIRED unless uri is set.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "uri": {
+          "description": "A URI used to identify the resource or artifact globally. This field is REQUIRED unless digest is set.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        }
+      }
+    },
     "RunDetails": {
       "description": "A structure representing the run details of the SLSA Provenance v1 Predicate.",
       "type": "object",
@@ -293,6 +471,69 @@
           "anyOf": [
             {
               "$ref": "#/definitions/ResourceDescriptor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "SLSAProvenanceV02Predicate": {
+      "description": "A structure representing the SLSA Provenance v0.2 Predicate.",
+      "type": "object",
+      "required": [
+        "buildType",
+        "builder"
+      ],
+      "properties": {
+        "buildConfig": {
+          "description": "The steps in the build. If invocation.configSource is not available, buildConfig can be used to verify information about the build.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": true
+        },
+        "buildType": {
+          "description": "The type of build that was performed.",
+          "type": "string",
+          "format": "uri"
+        },
+        "builder": {
+          "description": "The entity that executed the invocation, which is trusted to have correctly performed the operation and populated this provenance.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Builder2"
+            }
+          ]
+        },
+        "invocation": {
+          "description": "The event that kicked off the build.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Invocation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "materials": {
+          "description": "Unordered collection of artifacts that influenced the build including sources, dependencies, build tools, base images, and so on. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.",
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/ResourceDescriptor2"
+          }
+        },
+        "metadata": {
+          "description": "Metadata about this particular execution of the build.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/BuildMetadata2"
             },
             {
               "type": "null"

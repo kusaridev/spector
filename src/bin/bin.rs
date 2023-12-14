@@ -1,7 +1,7 @@
 //! A CLI tool for validating supply chain metadata documents.
 //!
 //! This tool currently supports validating In-Toto v1 documents with
-//! SLSA Provenance v1 predicates.
+//! SLSA Provenance v1 and v0.2 predicates.
 //! TODO(mlieberman85): The CLI commands and args could probably be generalized better to minimize duplication.
 
 use std::{path::PathBuf, process};
@@ -13,8 +13,8 @@ use serde_json::Value;
 use spector::{
     models::{
         intoto::{
-            predicate::Predicate, provenance::SLSAProvenanceV1Predicate,
-            statement::{InTotoStatementV1}, scai::SCAIV02Predicate,
+            predicate::Predicate, provenancev1::SLSAProvenanceV1Predicate, provenancev02::SLSAProvenanceV02Predicate,
+            statement::InTotoStatementV1, scai::SCAIV02Predicate,
         },
         sbom::{spdx22::Spdx22Document, spdx23::Spdx23},
     },
@@ -154,11 +154,14 @@ struct GenerateInTotoV1 {
 #[derive(Debug, Copy, Clone, ValueEnum)]
 enum PredicateOption {
     SLSAProvenanceV1,
+    SLSAProvenanceV02,
     SCAIV02Predicate,
 }
 
 #[derive(Parser)]
 struct SLSAProvenanceV1 {}
+#[derive(Parser)]
+struct SLSAProvenanceV02 {}
 
 /// Validates the specified document.
 fn validate_cmd(validate: Validate) -> Result<()> {
@@ -208,6 +211,26 @@ fn validate_intoto_v1(in_toto: ValidateInTotoV1) -> Result<()> {
                         Ok(())
                     }
                 },
+                Predicate::SLSAProvenanceV02(_) => match in_toto.predicate {
+                    Some(PredicateOption::SLSAProvenanceV02) => {
+                        println!("Valid InTotoV1 SLSAProvenanceV02 document");
+                        println!("Document: {}", &pretty_json);
+                        Ok(())
+                    }
+                    // TODO(mlieberman85): Uncomment below once additional predicate types are supported.
+                    Some(_) => {
+                        eprintln!("Invalid InTotoV1 SLSAProvenanceV02 document. Unexpected predicateType: {:?}", in_toto.predicate);
+                        eprintln!("Document: {}", &pretty_json);
+                        Err(anyhow::anyhow!(
+                            "Invalid InTotoV1 SLSAProvenanceV02 document"
+                        ))
+                    }
+                    None => {
+                        println!("Valid InTotoV1 SLSAProvenanceV02 document");
+                        println!("Document: {}", &pretty_json);
+                        Ok(())
+                    }
+                },
                 Predicate::SCAIV02(_) => match in_toto.predicate {
                     Some(PredicateOption::SCAIV02Predicate) => {
                         println!("Valid InTotoV1 SCAIV02Predicate document");
@@ -235,8 +258,15 @@ fn validate_intoto_v1(in_toto: ValidateInTotoV1) -> Result<()> {
                             "Unexpected predicateType: {:?}",
                             statement.predicate_type.as_str()
                         ))
-                    }
-                    else if let Some(PredicateOption::SCAIV02Predicate) = in_toto.predicate {
+
+                    } else if let Some(PredicateOption::SLSAProvenanceV02) = in_toto.predicate {
+                        eprintln!("Invalid InTotoV1 SLSAProvenanceV02 document");
+                        eprintln!("Document: {}", &pretty_json);
+                        Err(anyhow::anyhow!(
+                          "Unexpected predicateType: {:?}",
+                            statement.predicate_type.as_str()
+                        ))
+                    } else if let Some(PredicateOption::SCAIV02Predicate) = in_toto.predicate {
                         eprintln!("Invalid InTotoV1 SCAIV02Predicate document");
                         eprintln!("Document: {}", &pretty_json);
                         Err(anyhow::anyhow!(
@@ -288,6 +318,7 @@ fn validate_document<T: DeserializeOwned>(file_path: PathBuf) -> Result<()> {
 fn generate_intoto_v1(in_toto: GenerateInTotoV1) -> Result<()> {
     match in_toto.predicate {
         Some(PredicateOption::SLSAProvenanceV1) => print_schema::<SLSAProvenanceV1Predicate>(),
+        Some(PredicateOption::SLSAProvenanceV02) => print_schema::<SLSAProvenanceV02Predicate>(),
         Some(PredicateOption::SCAIV02Predicate) => print_schema::<SCAIV02Predicate>(),
         None => print_schema::<InTotoStatementV1>(),
     }

@@ -11,9 +11,7 @@ use std::collections::HashMap;
 use url::Url;
 use std::fmt::Debug;
 
-use crate::models::{
-    intoto::predicate::{deserialize_predicate, Predicate},
-};
+use crate::models::intoto::predicate::{deserialize_predicate, Predicate};
 
 /// Represents an In-Toto v1 statement.
 #[derive(Debug, Serialize, PartialEq, JsonSchema)]
