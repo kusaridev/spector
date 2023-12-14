@@ -80,6 +80,43 @@ impl BuildMetadata {
         builder::BuildMetadata::default()
     }
 }
+///A structure representing the metadata of the SLSA Provenance v0.2 Predicate.
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct BuildMetadata2 {
+    ///The timestamp of when the build completed.
+    #[serde(
+        rename = "buildFinishedOn",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub build_finished_on: Option<chrono::DateTime<chrono::offset::Utc>>,
+    ///Identifies this particular build invocation, which can be useful for finding associated logs or other ad-hoc analysis. The exact meaning and format is defined by builder.id; by default it is treated as opaque and case-sensitive. The value SHOULD be globally unique.
+    #[serde(
+        rename = "buildInvocationId",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub build_invocation_id: Option<String>,
+    ///The timestamp of when the build started.
+    #[serde(rename = "buildStartedOn", default, skip_serializing_if = "Option::is_none")]
+    pub build_started_on: Option<chrono::DateTime<chrono::offset::Utc>>,
+    ///Information on how complete the provided information is.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub completeness: Option<Completeness>,
+    ///Whether the builder claims that running invocation on materials will produce bit-for-bit identical output.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reproducible: Option<bool>,
+}
+impl From<&BuildMetadata2> for BuildMetadata2 {
+    fn from(value: &BuildMetadata2) -> Self {
+        value.clone()
+    }
+}
+impl BuildMetadata2 {
+    pub fn builder() -> builder::BuildMetadata2 {
+        builder::BuildMetadata2::default()
+    }
+}
 ///A structure representing the builder information of the SLSA Provenance v1 Predicate.
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct Builder {
@@ -101,6 +138,67 @@ impl From<&Builder> for Builder {
 impl Builder {
     pub fn builder() -> builder::Builder {
         builder::Builder::default()
+    }
+}
+///A structure representing the builder information of the SLSA Provenance v0.2 Predicate.
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct Builder2 {
+    pub id: String,
+}
+impl From<&Builder2> for Builder2 {
+    fn from(value: &Builder2) -> Self {
+        value.clone()
+    }
+}
+impl Builder2 {
+    pub fn builder() -> builder::Builder2 {
+        builder::Builder2::default()
+    }
+}
+///A structure representing the completeness claims of the SLSA Provenance v0.2 Predicate.
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct Completeness {
+    ///Whether the builder claims that invocation.environment is complete.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub environment: Option<bool>,
+    ///Whether the builder claims that materials is complete, usually through some controls to prevent network access.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub materials: Option<bool>,
+    ///Whether the builder claims that nvocation.parameters is complete, meaning that all external inputs are properly captured in invocation.parameters.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<bool>,
+}
+impl From<&Completeness> for Completeness {
+    fn from(value: &Completeness) -> Self {
+        value.clone()
+    }
+}
+impl Completeness {
+    pub fn builder() -> builder::Completeness {
+        builder::Completeness::default()
+    }
+}
+///A structure representing the description of where the config file that kicked off the build came from in the SLSA Provenance v0.2 Predicate.
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct ConfigSource {
+    ///A set of cryptographic digests of the contents of the resource or artifact.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub digest: Option<std::collections::HashMap<String, String>>,
+    ///The entry point into the build. This is often a path to a configuration file and/or a target label within that file.
+    #[serde(rename = "entryPoint", default, skip_serializing_if = "Option::is_none")]
+    pub entry_point: Option<String>,
+    ///The identity of the source of the config.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub uri: Option<String>,
+}
+impl From<&ConfigSource> for ConfigSource {
+    fn from(value: &ConfigSource) -> Self {
+        value.clone()
+    }
+}
+impl ConfigSource {
+    pub fn builder() -> builder::ConfigSource {
+        builder::ConfigSource::default()
     }
 }
 ///Represents a set of digests, mapping algorithms to their respective digest strings.
@@ -147,6 +245,29 @@ impl InTotoStatementV1ForPredicate {
         builder::InTotoStatementV1ForPredicate::default()
     }
 }
+///A structure identifying the event that kicked off the build in the SLSA Provenance v0.2 Predicate.
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct Invocation {
+    ///Description of where the config file that kicked off the build came from. This is effectively a pointer to the source where buildConfig came from.
+    #[serde(rename = "configSource", default, skip_serializing_if = "Option::is_none")]
+    pub config_source: Option<ConfigSource>,
+    ///Any other builder-controlled inputs necessary for correctly evaluating the build. Usually only needed for reproducing the build but not evaluated as part of policy.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub environment: Option<serde_json::Map<String, serde_json::Value>>,
+    ///Collection of all external inputs that influenced the build on top of invocation.configSource.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<serde_json::Map<String, serde_json::Value>>,
+}
+impl From<&Invocation> for Invocation {
+    fn from(value: &Invocation) -> Self {
+        value.clone()
+    }
+}
+impl Invocation {
+    pub fn builder() -> builder::Invocation {
+        builder::Invocation::default()
+    }
+}
 /**An enum representing different predicate types.
 
 Known predicate types have their own variants, while unknown types are represented by the `Other` variant, which stores the raw JSON value.
@@ -157,9 +278,11 @@ pub struct Predicate {
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
     pub subtype_0: Option<SlsaProvenanceV1Predicate>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
-    pub subtype_1: Option<Scaiv02Predicate>,
+    pub subtype_1: Option<SlsaProvenanceV02Predicate>,
     #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
-    pub subtype_2: Option<serde_json::Value>,
+    pub subtype_2: Option<Scaiv02Predicate>,
+    #[serde(flatten, default, skip_serializing_if = "Option::is_none")]
+    pub subtype_3: Option<serde_json::Value>,
 }
 impl From<&Predicate> for Predicate {
     fn from(value: &Predicate) -> Self {
@@ -209,6 +332,26 @@ impl ResourceDescriptor {
         builder::ResourceDescriptor::default()
     }
 }
+///A size-efficient description of any software artifact or resource (mutable or immutable).
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct ResourceDescriptor2 {
+    ///A set of cryptographic digests of the contents of the resource or artifact. This field is REQUIRED unless uri is set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub digest: Option<std::collections::HashMap<String, String>>,
+    ///A URI used to identify the resource or artifact globally. This field is REQUIRED unless digest is set.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub uri: Option<String>,
+}
+impl From<&ResourceDescriptor2> for ResourceDescriptor2 {
+    fn from(value: &ResourceDescriptor2) -> Self {
+        value.clone()
+    }
+}
+impl ResourceDescriptor2 {
+    pub fn builder() -> builder::ResourceDescriptor2 {
+        builder::ResourceDescriptor2::default()
+    }
+}
 ///A structure representing the run details of the SLSA Provenance v1 Predicate.
 #[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
 pub struct RunDetails {
@@ -246,6 +389,37 @@ impl From<&Scaiv02Predicate> for Scaiv02Predicate {
 impl Scaiv02Predicate {
     pub fn builder() -> builder::Scaiv02Predicate {
         builder::Scaiv02Predicate::default()
+    }
+}
+///A structure representing the SLSA Provenance v0.2 Predicate.
+#[derive(Clone, Debug, Deserialize, Serialize, schemars::JsonSchema)]
+pub struct SlsaProvenanceV02Predicate {
+    ///The steps in the build. If invocation.configSource is not available, buildConfig can be used to verify information about the build.
+    #[serde(rename = "buildConfig", default, skip_serializing_if = "Option::is_none")]
+    pub build_config: Option<serde_json::Map<String, serde_json::Value>>,
+    ///The type of build that was performed.
+    #[serde(rename = "buildType")]
+    pub build_type: String,
+    ///The entity that executed the invocation, which is trusted to have correctly performed the operation and populated this provenance.
+    pub builder: Builder2,
+    ///The event that kicked off the build.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub invocation: Option<Invocation>,
+    ///Unordered collection of artifacts that influenced the build including sources, dependencies, build tools, base images, and so on. Completeness is best effort, at least through SLSA Build L3. For example, if the build script fetches and executes “example.com/foo.sh”, which in turn fetches “example.com/bar.tar.gz”, then both “foo.sh” and “bar.tar.gz” SHOULD be listed here.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub materials: Option<Vec<ResourceDescriptor2>>,
+    ///Metadata about this particular execution of the build.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<BuildMetadata2>,
+}
+impl From<&SlsaProvenanceV02Predicate> for SlsaProvenanceV02Predicate {
+    fn from(value: &SlsaProvenanceV02Predicate) -> Self {
+        value.clone()
+    }
+}
+impl SlsaProvenanceV02Predicate {
+    pub fn builder() -> builder::SlsaProvenanceV02Predicate {
+        builder::SlsaProvenanceV02Predicate::default()
     }
 }
 ///A structure representing the SLSA Provenance v1 Predicate.
@@ -555,6 +729,121 @@ pub mod builder {
         }
     }
     #[derive(Clone, Debug)]
+    pub struct BuildMetadata2 {
+        build_finished_on: Result<Option<chrono::DateTime<chrono::offset::Utc>>, String>,
+        build_invocation_id: Result<Option<String>, String>,
+        build_started_on: Result<Option<chrono::DateTime<chrono::offset::Utc>>, String>,
+        completeness: Result<Option<super::Completeness>, String>,
+        reproducible: Result<Option<bool>, String>,
+    }
+    impl Default for BuildMetadata2 {
+        fn default() -> Self {
+            Self {
+                build_finished_on: Ok(Default::default()),
+                build_invocation_id: Ok(Default::default()),
+                build_started_on: Ok(Default::default()),
+                completeness: Ok(Default::default()),
+                reproducible: Ok(Default::default()),
+            }
+        }
+    }
+    impl BuildMetadata2 {
+        pub fn build_finished_on<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<chrono::DateTime<chrono::offset::Utc>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .build_finished_on = value
+                .try_into()
+                .map_err(|e| {
+                    format!(
+                        "error converting supplied value for build_finished_on: {}", e
+                    )
+                });
+            self
+        }
+        pub fn build_invocation_id<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<String>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .build_invocation_id = value
+                .try_into()
+                .map_err(|e| {
+                    format!(
+                        "error converting supplied value for build_invocation_id: {}", e
+                    )
+                });
+            self
+        }
+        pub fn build_started_on<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<chrono::DateTime<chrono::offset::Utc>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .build_started_on = value
+                .try_into()
+                .map_err(|e| {
+                    format!(
+                        "error converting supplied value for build_started_on: {}", e
+                    )
+                });
+            self
+        }
+        pub fn completeness<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<super::Completeness>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .completeness = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for completeness: {}", e)
+                });
+            self
+        }
+        pub fn reproducible<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<bool>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .reproducible = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for reproducible: {}", e)
+                });
+            self
+        }
+    }
+    impl std::convert::TryFrom<BuildMetadata2> for super::BuildMetadata2 {
+        type Error = String;
+        fn try_from(value: BuildMetadata2) -> Result<Self, String> {
+            Ok(Self {
+                build_finished_on: value.build_finished_on?,
+                build_invocation_id: value.build_invocation_id?,
+                build_started_on: value.build_started_on?,
+                completeness: value.completeness?,
+                reproducible: value.reproducible?,
+            })
+        }
+    }
+    impl From<super::BuildMetadata2> for BuildMetadata2 {
+        fn from(value: super::BuildMetadata2) -> Self {
+            Self {
+                build_finished_on: Ok(value.build_finished_on),
+                build_invocation_id: Ok(value.build_invocation_id),
+                build_started_on: Ok(value.build_started_on),
+                completeness: Ok(value.completeness),
+                reproducible: Ok(value.reproducible),
+            }
+        }
+    }
+    #[derive(Clone, Debug)]
     pub struct Builder {
         builder_dependencies: Result<Option<Vec<super::ResourceDescriptor>>, String>,
         id: Result<String, String>,
@@ -626,6 +915,189 @@ pub mod builder {
                 builder_dependencies: Ok(value.builder_dependencies),
                 id: Ok(value.id),
                 version: Ok(value.version),
+            }
+        }
+    }
+    #[derive(Clone, Debug)]
+    pub struct Builder2 {
+        id: Result<String, String>,
+    }
+    impl Default for Builder2 {
+        fn default() -> Self {
+            Self {
+                id: Err("no value supplied for id".to_string()),
+            }
+        }
+    }
+    impl Builder2 {
+        pub fn id<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<String>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .id = value
+                .try_into()
+                .map_err(|e| format!("error converting supplied value for id: {}", e));
+            self
+        }
+    }
+    impl std::convert::TryFrom<Builder2> for super::Builder2 {
+        type Error = String;
+        fn try_from(value: Builder2) -> Result<Self, String> {
+            Ok(Self { id: value.id? })
+        }
+    }
+    impl From<super::Builder2> for Builder2 {
+        fn from(value: super::Builder2) -> Self {
+            Self { id: Ok(value.id) }
+        }
+    }
+    #[derive(Clone, Debug)]
+    pub struct Completeness {
+        environment: Result<Option<bool>, String>,
+        materials: Result<Option<bool>, String>,
+        parameters: Result<Option<bool>, String>,
+    }
+    impl Default for Completeness {
+        fn default() -> Self {
+            Self {
+                environment: Ok(Default::default()),
+                materials: Ok(Default::default()),
+                parameters: Ok(Default::default()),
+            }
+        }
+    }
+    impl Completeness {
+        pub fn environment<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<bool>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .environment = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for environment: {}", e)
+                });
+            self
+        }
+        pub fn materials<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<bool>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .materials = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for materials: {}", e)
+                });
+            self
+        }
+        pub fn parameters<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<bool>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .parameters = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for parameters: {}", e)
+                });
+            self
+        }
+    }
+    impl std::convert::TryFrom<Completeness> for super::Completeness {
+        type Error = String;
+        fn try_from(value: Completeness) -> Result<Self, String> {
+            Ok(Self {
+                environment: value.environment?,
+                materials: value.materials?,
+                parameters: value.parameters?,
+            })
+        }
+    }
+    impl From<super::Completeness> for Completeness {
+        fn from(value: super::Completeness) -> Self {
+            Self {
+                environment: Ok(value.environment),
+                materials: Ok(value.materials),
+                parameters: Ok(value.parameters),
+            }
+        }
+    }
+    #[derive(Clone, Debug)]
+    pub struct ConfigSource {
+        digest: Result<Option<std::collections::HashMap<String, String>>, String>,
+        entry_point: Result<Option<String>, String>,
+        uri: Result<Option<String>, String>,
+    }
+    impl Default for ConfigSource {
+        fn default() -> Self {
+            Self {
+                digest: Ok(Default::default()),
+                entry_point: Ok(Default::default()),
+                uri: Ok(Default::default()),
+            }
+        }
+    }
+    impl ConfigSource {
+        pub fn digest<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<std::collections::HashMap<String, String>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .digest = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for digest: {}", e)
+                });
+            self
+        }
+        pub fn entry_point<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<String>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .entry_point = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for entry_point: {}", e)
+                });
+            self
+        }
+        pub fn uri<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<String>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .uri = value
+                .try_into()
+                .map_err(|e| format!("error converting supplied value for uri: {}", e));
+            self
+        }
+    }
+    impl std::convert::TryFrom<ConfigSource> for super::ConfigSource {
+        type Error = String;
+        fn try_from(value: ConfigSource) -> Result<Self, String> {
+            Ok(Self {
+                digest: value.digest?,
+                entry_point: value.entry_point?,
+                uri: value.uri?,
+            })
+        }
+    }
+    impl From<super::ConfigSource> for ConfigSource {
+        fn from(value: super::ConfigSource) -> Self {
+            Self {
+                digest: Ok(value.digest),
+                entry_point: Ok(value.entry_point),
+                uri: Ok(value.uri),
             }
         }
     }
@@ -723,10 +1195,86 @@ pub mod builder {
         }
     }
     #[derive(Clone, Debug)]
+    pub struct Invocation {
+        config_source: Result<Option<super::ConfigSource>, String>,
+        environment: Result<Option<serde_json::Map<String, serde_json::Value>>, String>,
+        parameters: Result<Option<serde_json::Map<String, serde_json::Value>>, String>,
+    }
+    impl Default for Invocation {
+        fn default() -> Self {
+            Self {
+                config_source: Ok(Default::default()),
+                environment: Ok(Default::default()),
+                parameters: Ok(Default::default()),
+            }
+        }
+    }
+    impl Invocation {
+        pub fn config_source<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<super::ConfigSource>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .config_source = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for config_source: {}", e)
+                });
+            self
+        }
+        pub fn environment<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<serde_json::Map<String, serde_json::Value>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .environment = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for environment: {}", e)
+                });
+            self
+        }
+        pub fn parameters<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<serde_json::Map<String, serde_json::Value>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .parameters = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for parameters: {}", e)
+                });
+            self
+        }
+    }
+    impl std::convert::TryFrom<Invocation> for super::Invocation {
+        type Error = String;
+        fn try_from(value: Invocation) -> Result<Self, String> {
+            Ok(Self {
+                config_source: value.config_source?,
+                environment: value.environment?,
+                parameters: value.parameters?,
+            })
+        }
+    }
+    impl From<super::Invocation> for Invocation {
+        fn from(value: super::Invocation) -> Self {
+            Self {
+                config_source: Ok(value.config_source),
+                environment: Ok(value.environment),
+                parameters: Ok(value.parameters),
+            }
+        }
+    }
+    #[derive(Clone, Debug)]
     pub struct Predicate {
         subtype_0: Result<Option<super::SlsaProvenanceV1Predicate>, String>,
-        subtype_1: Result<Option<super::Scaiv02Predicate>, String>,
-        subtype_2: Result<Option<serde_json::Value>, String>,
+        subtype_1: Result<Option<super::SlsaProvenanceV02Predicate>, String>,
+        subtype_2: Result<Option<super::Scaiv02Predicate>, String>,
+        subtype_3: Result<Option<serde_json::Value>, String>,
     }
     impl Default for Predicate {
         fn default() -> Self {
@@ -734,6 +1282,7 @@ pub mod builder {
                 subtype_0: Ok(Default::default()),
                 subtype_1: Ok(Default::default()),
                 subtype_2: Ok(Default::default()),
+                subtype_3: Ok(Default::default()),
             }
         }
     }
@@ -753,7 +1302,7 @@ pub mod builder {
         }
         pub fn subtype_1<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<Option<super::Scaiv02Predicate>>,
+            T: std::convert::TryInto<Option<super::SlsaProvenanceV02Predicate>>,
             T::Error: std::fmt::Display,
         {
             self
@@ -766,7 +1315,7 @@ pub mod builder {
         }
         pub fn subtype_2<T>(mut self, value: T) -> Self
         where
-            T: std::convert::TryInto<Option<serde_json::Value>>,
+            T: std::convert::TryInto<Option<super::Scaiv02Predicate>>,
             T::Error: std::fmt::Display,
         {
             self
@@ -774,6 +1323,19 @@ pub mod builder {
                 .try_into()
                 .map_err(|e| {
                     format!("error converting supplied value for subtype_2: {}", e)
+                });
+            self
+        }
+        pub fn subtype_3<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<serde_json::Value>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .subtype_3 = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for subtype_3: {}", e)
                 });
             self
         }
@@ -785,6 +1347,7 @@ pub mod builder {
                 subtype_0: value.subtype_0?,
                 subtype_1: value.subtype_1?,
                 subtype_2: value.subtype_2?,
+                subtype_3: value.subtype_3?,
             })
         }
     }
@@ -794,6 +1357,7 @@ pub mod builder {
                 subtype_0: Ok(value.subtype_0),
                 subtype_1: Ok(value.subtype_1),
                 subtype_2: Ok(value.subtype_2),
+                subtype_3: Ok(value.subtype_3),
             }
         }
     }
@@ -939,6 +1503,62 @@ pub mod builder {
         }
     }
     #[derive(Clone, Debug)]
+    pub struct ResourceDescriptor2 {
+        digest: Result<Option<std::collections::HashMap<String, String>>, String>,
+        uri: Result<Option<String>, String>,
+    }
+    impl Default for ResourceDescriptor2 {
+        fn default() -> Self {
+            Self {
+                digest: Ok(Default::default()),
+                uri: Ok(Default::default()),
+            }
+        }
+    }
+    impl ResourceDescriptor2 {
+        pub fn digest<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<std::collections::HashMap<String, String>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .digest = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for digest: {}", e)
+                });
+            self
+        }
+        pub fn uri<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<String>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .uri = value
+                .try_into()
+                .map_err(|e| format!("error converting supplied value for uri: {}", e));
+            self
+        }
+    }
+    impl std::convert::TryFrom<ResourceDescriptor2> for super::ResourceDescriptor2 {
+        type Error = String;
+        fn try_from(value: ResourceDescriptor2) -> Result<Self, String> {
+            Ok(Self {
+                digest: value.digest?,
+                uri: value.uri?,
+            })
+        }
+    }
+    impl From<super::ResourceDescriptor2> for ResourceDescriptor2 {
+        fn from(value: super::ResourceDescriptor2) -> Self {
+            Self {
+                digest: Ok(value.digest),
+                uri: Ok(value.uri),
+            }
+        }
+    }
+    #[derive(Clone, Debug)]
     pub struct RunDetails {
         builder: Result<super::Builder, String>,
         byproducts: Result<Option<Vec<super::ResourceDescriptor>>, String>,
@@ -1068,6 +1688,133 @@ pub mod builder {
             Self {
                 attributes: Ok(value.attributes),
                 producer: Ok(value.producer),
+            }
+        }
+    }
+    #[derive(Clone, Debug)]
+    pub struct SlsaProvenanceV02Predicate {
+        build_config: Result<Option<serde_json::Map<String, serde_json::Value>>, String>,
+        build_type: Result<String, String>,
+        builder: Result<super::Builder2, String>,
+        invocation: Result<Option<super::Invocation>, String>,
+        materials: Result<Option<Vec<super::ResourceDescriptor2>>, String>,
+        metadata: Result<Option<super::BuildMetadata2>, String>,
+    }
+    impl Default for SlsaProvenanceV02Predicate {
+        fn default() -> Self {
+            Self {
+                build_config: Ok(Default::default()),
+                build_type: Err("no value supplied for build_type".to_string()),
+                builder: Err("no value supplied for builder".to_string()),
+                invocation: Ok(Default::default()),
+                materials: Ok(Default::default()),
+                metadata: Ok(Default::default()),
+            }
+        }
+    }
+    impl SlsaProvenanceV02Predicate {
+        pub fn build_config<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<serde_json::Map<String, serde_json::Value>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .build_config = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for build_config: {}", e)
+                });
+            self
+        }
+        pub fn build_type<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<String>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .build_type = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for build_type: {}", e)
+                });
+            self
+        }
+        pub fn builder<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<super::Builder2>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .builder = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for builder: {}", e)
+                });
+            self
+        }
+        pub fn invocation<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<super::Invocation>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .invocation = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for invocation: {}", e)
+                });
+            self
+        }
+        pub fn materials<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<Vec<super::ResourceDescriptor2>>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .materials = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for materials: {}", e)
+                });
+            self
+        }
+        pub fn metadata<T>(mut self, value: T) -> Self
+        where
+            T: std::convert::TryInto<Option<super::BuildMetadata2>>,
+            T::Error: std::fmt::Display,
+        {
+            self
+                .metadata = value
+                .try_into()
+                .map_err(|e| {
+                    format!("error converting supplied value for metadata: {}", e)
+                });
+            self
+        }
+    }
+    impl std::convert::TryFrom<SlsaProvenanceV02Predicate>
+    for super::SlsaProvenanceV02Predicate {
+        type Error = String;
+        fn try_from(value: SlsaProvenanceV02Predicate) -> Result<Self, String> {
+            Ok(Self {
+                build_config: value.build_config?,
+                build_type: value.build_type?,
+                builder: value.builder?,
+                invocation: value.invocation?,
+                materials: value.materials?,
+                metadata: value.metadata?,
+            })
+        }
+    }
+    impl From<super::SlsaProvenanceV02Predicate> for SlsaProvenanceV02Predicate {
+        fn from(value: super::SlsaProvenanceV02Predicate) -> Self {
+            Self {
+                build_config: Ok(value.build_config),
+                build_type: Ok(value.build_type),
+                builder: Ok(value.builder),
+                invocation: Ok(value.invocation),
+                materials: Ok(value.materials),
+                metadata: Ok(value.metadata),
             }
         }
     }

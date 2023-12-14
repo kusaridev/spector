@@ -7,7 +7,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::provenance::ResourceDescriptor;
+use super::provenancev1::ResourceDescriptor;
 
 /// This is based on the model in: 
 /// {

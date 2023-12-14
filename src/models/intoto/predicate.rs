@@ -4,7 +4,8 @@
 //! to handle different predicate types, including known types such as `SLSAProvenanceV1`
 //! and generic `Other` variants.
 
-use super::provenance::SLSAProvenanceV1Predicate;
+use super::provenancev1::SLSAProvenanceV1Predicate;
+use super::provenancev02::SLSAProvenanceV02Predicate;
 use super::scai::SCAIV02Predicate;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
@@ -21,6 +22,7 @@ use serde_json::Value;
 #[serde(untagged)]
 pub enum Predicate {
     SLSAProvenanceV1(SLSAProvenanceV1Predicate),
+    SLSAProvenanceV02(SLSAProvenanceV02Predicate),
     SCAIV02(SCAIV02Predicate),
     Other(Value),
 }
@@ -44,6 +46,10 @@ pub fn deserialize_predicate(
         "https://slsa.dev/provenance/v1" => {
             let slsa_provenance = deserialize_helper::<SLSAProvenanceV1Predicate>(predicate_json)?;
             Ok(Predicate::SLSAProvenanceV1(slsa_provenance))
+        }
+        "https://slsa.dev/provenance/v0.2" => {
+            let slsa_provenance: SLSAProvenanceV02Predicate = deserialize_helper::<SLSAProvenanceV02Predicate>(predicate_json)?;
+            Ok(Predicate::SLSAProvenanceV02(slsa_provenance))
         }
         "https://in-toto.io/attestation/scai/attribute-report" => {
             let scai_v02 = deserialize_helper::<SCAIV02Predicate>(predicate_json)?;
@@ -84,6 +90,29 @@ mod tests {
 
         let result = deserialize_predicate(predicate_type, &predicate_json);
         assert!(matches!(result, Ok(Predicate::SLSAProvenanceV1(_))));
+    }
+
+    #[test]
+    fn test_deserialize_slsa_provenance_v02_predicate() {
+        let predicate_type = "https://slsa.dev/provenance/v0.2";
+        let predicate_json = json!({
+            "buildType": "https://slsa.dev/provenance/v0.2",
+            "invocation": {
+                "parameters": {},
+                "environment": {}
+            },
+            "builder": {
+                "id": "https://example.com/builder"
+            },
+            "materials": [],
+            "metadata": {
+                "buildInvocationId": "test-invocation-id",
+                "buildStartedOn": "2022-01-01T00:00:00Z"
+            }
+        });
+
+        let result = deserialize_predicate(predicate_type, &predicate_json);
+        assert!(matches!(result, Ok(Predicate::SLSAProvenanceV02(_))));
     }
 
     #[test]
