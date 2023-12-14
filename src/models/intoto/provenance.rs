@@ -3,7 +3,7 @@
 //! This module provides structs for the SLSAProvenanceV1Predicate and its related structures.
 //! It also includes the necessary (de)serialization code for handling SLSA provenance predicates.
 
-use crate::models::helpers::{b64_option_serde, url_serde};
+use crate::models::helpers::b64_option_serde;
 use chrono::{DateTime, Utc};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ pub struct SLSAProvenanceV1Predicate {
 /// A structure representing the build definition of the SLSA Provenance v1 Predicate.
 #[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct BuildDefinition {
-    #[serde(rename = "buildType", with = "url_serde")]
+    #[serde(rename = "buildType")]
     #[schemars(with = "Url")]
     pub build_type: Url,
     #[serde(rename = "externalParameters")]
@@ -52,7 +52,6 @@ pub struct RunDetails {
 /// A structure representing the builder information of the SLSA Provenance v1 Predicate.
 #[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct Builder {
-    #[serde(with = "url_serde")]
     #[schemars(with = "Url")]
     pub id: Url,
     #[serde(
@@ -81,7 +80,6 @@ pub struct BuildMetadata {
 /// A size-efficient description of any software artifact or resource (mutable or immutable).
 #[derive(Debug, Serialize, Deserialize, PartialEq, JsonSchema)]
 pub struct ResourceDescriptor {
-    #[serde(with = "url_serde")]
     #[schemars(with = "Url")]
     /// A URI used to identify the resource or artifact globally. This field is REQUIRED unless either digest or content is set.
     pub uri: Url,
@@ -93,7 +91,6 @@ pub struct ResourceDescriptor {
     pub name: Option<String>,
     #[serde(
         rename = "downloadLocation",
-        with = "url_serde",
         default,
         skip_serializing_if = "Option::is_none"
     )]

@@ -12,18 +12,17 @@ use url::Url;
 use std::fmt::Debug;
 
 use crate::models::{
-    helpers::url_serde,
     intoto::predicate::{deserialize_predicate, Predicate},
 };
 
 /// Represents an In-Toto v1 statement.
 #[derive(Debug, Serialize, PartialEq, JsonSchema)]
 pub struct InTotoStatementV1<T: Debug + Serialize + PartialEq + JsonSchema = Predicate> {
-    #[serde(rename = "_type", with = "url_serde")]
+    #[serde(rename = "_type")]
     #[schemars(with = "Url")]
     pub _type: Url,
     pub subject: Vec<Subject>,
-    #[serde(rename = "predicateType", with = "url_serde")]
+    #[serde(rename = "predicateType")]
     #[schemars(with = "Url")]
     pub predicate_type: Url,
     pub predicate: T,
@@ -75,10 +74,10 @@ impl<'de> Deserialize<'de> for InTotoStatementV1 {
         // Helper struct to deserialize the JSON before constructing the InTotoStatementV1.
         #[derive(Deserialize)]
         struct Helper {
-            #[serde(rename = "_type", with = "url_serde")]
+            #[serde(rename = "_type")]
             _type: Url,
             subject: Vec<Subject>,
-            #[serde(rename = "predicateType", with = "url_serde")]
+            #[serde(rename = "predicateType")]
             predicate_type: Url,
             predicate: Value,
         }
